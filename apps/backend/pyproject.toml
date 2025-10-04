@@ -13,7 +13,6 @@ dependencies = [
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
     "sqlalchemy>=2.0.0",
-    "alembic>=1.12.0",
     "psycopg2-binary>=2.9.0",
     "geoalchemy2>=0.14.0",
     "pydantic>=2.0.0",
@@ -39,9 +38,7 @@ dev = [
     "pre-commit>=3.4.0",
 ]
 
-[project.scripts]
-migrate = "alembic upgrade head"
-migrate-create = "alembic revision --autogenerate -m"
+# Removed project.scripts section - using direct SQLAlchemy table creation instead
 
 [tool.setuptools.packages.find]
 where = ["."]

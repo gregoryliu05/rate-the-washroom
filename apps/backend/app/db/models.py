@@ -71,14 +71,6 @@ class Washroom(Base):
     photos = relationship("Photo", back_populates="washroom", cascade="all, delete-orphan")
     reports = relationship("Report", back_populates="washroom", cascade="all, delete-orphan")
 
-    # Indexes
-    __table_args__ = (
-        Index('idx_washrooms_geom', 'geom', postgresql_using='gist'),
-        Index('idx_washrooms_city', 'city'),
-        Index('idx_washrooms_created_by', 'created_by'),
-        Index('idx_washrooms_is_active', 'is_active'),
-    )
-
 
 class Review(Base):
     __tablename__ = "reviews"
@@ -107,13 +99,9 @@ class Review(Base):
     washroom = relationship("Washroom", back_populates="reviews")
     user = relationship("User", back_populates="reviews")
 
-    # Constraints and indexes
+    # Constraints only (indexes created separately in init_db.py)
     __table_args__ = (
         UniqueConstraint('washroom_id', 'user_id', name='uq_review_washroom_user'),
-        Index('idx_reviews_washroom_id', 'washroom_id'),
-        Index('idx_reviews_user_id', 'user_id'),
-        Index('idx_reviews_overall_rating', 'overall_rating'),
-        Index('idx_reviews_created_at', 'created_at'),
     )
 
 
@@ -149,14 +137,6 @@ class Photo(Base):
     washroom = relationship("Washroom", back_populates="photos")
     user = relationship("User", back_populates="photos")
 
-    # Indexes
-    __table_args__ = (
-        Index('idx_photos_washroom_id', 'washroom_id'),
-        Index('idx_photos_user_id', 'user_id'),
-        Index('idx_photos_is_approved', 'is_approved'),
-        Index('idx_photos_created_at', 'created_at'),
-    )
-
 
 class Report(Base):
     __tablename__ = "reports"
@@ -187,12 +167,3 @@ class Report(Base):
     washroom = relationship("Washroom", back_populates="reports")
     user = relationship("User", back_populates="reports")
     resolver = relationship("User", foreign_keys=[resolved_by])
-
-    # Indexes
-    __table_args__ = (
-        Index('idx_reports_washroom_id', 'washroom_id'),
-        Index('idx_reports_user_id', 'user_id'),
-        Index('idx_reports_status', 'status'),
-        Index('idx_reports_priority', 'priority'),
-        Index('idx_reports_created_at', 'created_at'),
-    )
