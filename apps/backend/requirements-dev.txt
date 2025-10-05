@@ -17,3 +17,6 @@ pre-commit>=3.4.0
 # Development tools
 ipython>=8.0.0
 jupyter>=1.0.0
+
+# Data tools
+pandas>=2.0.0

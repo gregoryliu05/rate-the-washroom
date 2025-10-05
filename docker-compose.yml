@@ -40,6 +40,7 @@ services:
       DEBUG: "true"
       VIRTUAL_ENV: /opt/venv
       PATH: "/opt/venv/bin:$PATH"
+      GOOGLE_APPLICATION_CREDS: "/app/ratethewashroom-a7745-firebase-adminsdk-fbsvc-67f7db3207.json"
     volumes:
       - ./apps/backend:/app
       - uploads_data:/app/uploads
