@@ -22,6 +22,7 @@ class User(Base):
     first_name = Column(String(50), nullable=False)
     last_name = Column(String(50), nullable=False)
     last_login = Column(DateTime, nullable=True)
+    password = Column(String(50), unique= False, nullable=False)
 
     # Relationships
     reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
@@ -45,6 +46,8 @@ class Washroom(Base):
     # Washroom details
     opening_hours = Column(JSONB, nullable=True)
 
+    overall_rating = Column(Float, default=0.0)
+    rating_count = Column(Integer, default=0)
 
     # Metadata
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)

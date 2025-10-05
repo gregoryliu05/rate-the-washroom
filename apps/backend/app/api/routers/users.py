@@ -57,9 +57,10 @@ async def delete_user(user_id: str, db: AsyncSession = Depends(deps.get_db)):
 @router.post("/", response_model = schemas.UserOut, status_code = status.HTTP_201_CREATED)
 async def create_user(user_in: schemas.UserCreate, db: AsyncSession = Depends(deps.get_db)):
     new_user = models.user(
-        id = str(uuid4()),
+        id = uuid4(),
         email = user_in.email,
-        name = user_in.name,
+        first_name = user_in.first_name,
+        last_name = user_in.last_name,
         password = user_in.password,
         username = user_in.username
     )
@@ -70,23 +71,23 @@ async def create_user(user_in: schemas.UserCreate, db: AsyncSession = Depends(de
     return new_user
 
 
-@router.patch("/{user_id}", status_code = 204)
-async def patch_user(user_id: str, data: UserUpdate, db: AsyncSession = Depends(deps.get_db)):
-    try:
-        user_uuid = UUID(user_id)
-    except ValueError:
-        raise HTTPException(status_code= 400, detail = "User ID must be UUID")
+# @router.patch("/{user_id}", status_code = 204)
+# async def patch_user(user_id: str, data: UserUpdate, db: AsyncSession = Depends(deps.get_db)):
+#     try:
+#         user_uuid = UUID(user_id)
+#     except ValueError:
+#         raise HTTPException(status_code= 400, detail = "User ID must be UUID")
 
-    res = await db.execute(select(models.User).where(models.User.id == user_id))
-    user = res.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code = 404, detail = "User not found")
+#     res = await db.execute(select(models.User).where(models.User.id == user_id))
+#     user = res.scalar_one_or_none()
+#     if not user:
+#         raise HTTPException(status_code = 404, detail = "User not found")
 
-    if data.password != None:
-        user.hashed_password = data.password
+#     if data.password != None:
+#         user.hashed_password = data.password
 
-    await db.commit()
-    return
+#     await db.commit()
+#     return
 
 
 # get user Friends
