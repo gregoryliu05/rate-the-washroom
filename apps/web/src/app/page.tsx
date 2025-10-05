@@ -6,10 +6,15 @@ import { useEffect, useState } from 'react';
 import { Listing } from '../types';
 
 export default function Home() {
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  //const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyListings, setNearbyListings] = useState<Listing[]>([]);
   const [locationPermission, setLocationPermission] = useState<'granted' | 'denied' | 'pending'>('pending');
   const [loading, setLoading] = useState(false);
+
+  const userLocation = {
+    lat: 49.2827,
+    long: 123.1207
+  };
 
   // Request user location
   const requestLocation = () => {
@@ -66,7 +71,7 @@ export default function Home() {
       <div id="list" className="h-80 bg-gray-100 flex justify-center items-center">
         <ClosestPlaces 
           userLocation={userLocation}
-          maxDistance={10}   // 10km radius
+          maxDistance={100000}   // 10km radius
           limit={25}            // Show top 25 closest places
         />
       </div> 
