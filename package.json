@@ -10,3 +10,8 @@
     "react-dom": "^19.2.0"
   }
 }
+{
+  "dependencies": {
+    "@react-google-maps/api": "^2.20.7"
+  }
+}
