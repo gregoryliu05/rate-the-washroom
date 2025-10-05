@@ -14,6 +14,7 @@ export interface Location {
     opening_hours?: OpeningHours;
     overall_rating: number;
     rating_count: number;
+    distance?: number;
 }
   
 export interface ClosestPlacesProps {

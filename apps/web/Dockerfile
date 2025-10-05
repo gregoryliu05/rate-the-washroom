@@ -1,3 +1,13 @@
+# Use the official Node.js 18 image
+FROM node:18-alpine
+
+# Set the working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
 # Multi-stage build for Next.js frontend
 FROM node:18-alpine AS base
 
@@ -71,6 +81,13 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Build the Next.js app
+RUN npm run build
+
+# Expose port 3000
+EXPOSE 3000
+
+# Start the development server
 # Set environment for development
 ENV NODE_ENV development
 ENV NEXT_TELEMETRY_DISABLED 1
