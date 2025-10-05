@@ -105,6 +105,7 @@ async def get_washroom(washroom_id: str, db: AsyncSession = Depends(deps.get_db)
         lat = washroom.lat,
         long = washroom.long,
         opening_hours=washroom.opening_hours,
+        wheelchair_access = washroom.wheelchair_access,
         overall_rating=washroom.overall_rating,
         rating_count=washroom.rating_count,
         created_by=str(washroom.created_by)
