@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -16,6 +16,7 @@ RUN apt-get update \
         build-essential \
         libpq-dev \
         postgresql-client \
+        git \
     && rm -rf /var/lib/apt/lists/*
 
 # Create virtual environment
@@ -24,9 +25,9 @@ RUN python -m venv /opt/venv
 # Copy dependency files
 COPY pyproject.toml ./
 
-# Install Python dependencies in virtual environment
+# Install Python dependencies in virtual environment (including dev dependencies)
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -e .
+    && pip install --no-cache-dir -e ".[dev]"
 
 # Copy application code
 COPY . .
@@ -35,17 +36,17 @@ COPY . .
 RUN mkdir -p uploads \
     && chown -R 1000:1000 /app
 
-# Create non-root user
+# Create non-root user for development
 RUN useradd --create-home --shell /bin/bash app \
     && chown -R app:app /app
+
+# Make startup script executable
+RUN chmod +x start.sh
+
 USER app
 
 # Expose port
 EXPOSE 8000
 
-# Default command (can be overridden)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-
-# Migration command
-# Usage: docker run --rm -it <image> alembic upgrade head
-# Or add as a script in docker-compose.yml
+# Use startup script
+CMD ["./start.sh"]

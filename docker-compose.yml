@@ -12,7 +12,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./apps/backend/app/db/init_postgis.sql:/docker-entrypoint-initdb.d/init_postgis.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -27,11 +26,11 @@ services:
     volumes:
       - redis_data:/data
 
-  # Backend API
+  # Backend API (development)
   api:
     build:
       context: ./apps/backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     ports:
       - "8000:8000"
     environment:
@@ -39,48 +38,81 @@ services:
       REDIS_URL: redis://redis:6379
       ENVIRONMENT: development
       DEBUG: "true"
+      VIRTUAL_ENV: /opt/venv
+      PATH: "/opt/venv/bin:$PATH"
     volumes:
       - ./apps/backend:/app
+      - uploads_data:/app/uploads
+      - /opt/venv  # Preserve virtual environment
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    user: "1000:1000"  # Run as non-root user
+    # Removed command - will use CMD from Dockerfile
+
+  # Backend API (production)
+  api-prod:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/rate_the_washroom
+      REDIS_URL: redis://redis:6379
+      ENVIRONMENT: production
+      DEBUG: "false"
+      VIRTUAL_ENV: /opt/venv
+      PATH: "/opt/venv/bin:$PATH"
+      GOOGLE_APPLICATION_CREDS: "/app/ratethewashroom-a7745-firebase-adminsdk-fbsvc-67f7db3207.json"
+    volumes:
       - uploads_data:/app/uploads
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_started
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-
-  # Migration service (run once)
-  migrate:
-    build:
-      context: ./apps/backend
-      dockerfile: Dockerfile
-    environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/rate_the_washroom
-      DATABASE_HOST: db
-      DATABASE_PORT: 5432
-      DATABASE_USER: postgres
-    depends_on:
-      db:
-        condition: service_healthy
-    command: alembic upgrade head
+    user: "1000:1000"  # Run as non-root user
+    command: bash -c "python app/db/init_db.py && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     profiles:
-      - migration
+      - production
 
-  # Web frontend
+  # Web frontend (development)
   web:
     build:
       context: ./apps/web
       dockerfile: Dockerfile
+      target: dev
     ports:
       - "3000:3000"
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000
+      NODE_ENV: development
     volumes:
       - ./apps/web:/app
       - /app/node_modules
+      - /app/.next
     depends_on:
       - api
     command: npm run dev
+
+  # Web frontend (production)
+  web-prod:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      target: runner
+    ports:
+      - "3001:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8001
+      NODE_ENV: production
+    depends_on:
+      - api-prod
+    profiles:
+      - production
 
 volumes:
   postgres_data:
