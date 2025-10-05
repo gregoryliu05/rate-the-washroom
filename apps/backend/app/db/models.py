@@ -4,7 +4,7 @@ from sqlalchemy import (
     Boolean, Column, DateTime, ForeignKey, Integer, String, Text, Float,
     Index, UniqueConstraint
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from geoalchemy2 import Geometry
@@ -18,12 +18,8 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
-    full_name = Column(String(100), nullable=True)
-    hashed_password = Column(String(255), nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
-    is_verified = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    full_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
     last_login = Column(DateTime, nullable=True)
 
     # Relationships
@@ -36,12 +32,13 @@ class Washroom(Base):
     __tablename__ = "washrooms"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String(255), nullable=False)
+    name = Column(String(50), nullable=False)
     description = Column(Text, nullable=True)
     address = Column(String(500), nullable=True)
     city = Column(String(100), nullable=True)
     country = Column(String(100), nullable=True)
     postal_code = Column(String(20), nullable=True)
+
 
     # PostGIS geometry field for location
     geom = Column(Geometry('POINT', srid=4326), nullable=False)
@@ -59,10 +56,7 @@ class Washroom(Base):
 
     # Metadata
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    is_verified = Column(Boolean, default=False, nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
+
 
     # Relationships
     creator = relationship("User")
@@ -89,8 +83,7 @@ class Review(Base):
     content = Column(Text, nullable=True)
 
     # Metadata
-    is_verified = Column(Boolean, default=False, nullable=False)
-    is_helpful = Column(Integer, default=0, nullable=False)  # Count of helpful votes
+    likes = Column(Integer, default=0, nullable=False)  # Count of helpful votes
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
