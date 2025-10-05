@@ -1,11 +1,20 @@
 import Link from "next/link"
+import ProfileIcon from "./profileicon"
 
 export default function Navbar() {
     return (
-        <nav className="navbar">
-            <div className="nav-container flex-cols text-2xl bg-blue-700 flex justify-center items-center">
+        <nav className="navbar w-full bg-gray-100 p-4 grid grid-cols-[1fr_auto_1fr] items-center ">
+            <Link href="/" className="bg-green-200 text-xl font-bold flex justify-self-start">
+                Poop Map
+            </Link>
+            <div className="nav-container bg-red-400 gap-6 text-2xl flex justify-center items-center">
                 <Link href="/">Home</Link>
+                <Link href="/add-listing">Add Listing</Link>
+                <Link href="/add-review">Add Review</Link>
                 <Link href="/login">Login</Link>
+            </div>
+            <div className="justify-self-end">
+                <ProfileIcon />
             </div>
         </nav>
     )
