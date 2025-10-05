@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.settings import settings
+from app.api.routers import washrooms, users, reviews
 
 # Create FastAPI app
 app = FastAPI(
@@ -9,6 +10,10 @@ app = FastAPI(
     description="Rate the Washroom API",
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
+
+app.include_router(washrooms.router)
+app.include_router(users.router)
+app.include(reviews.router)
 
 # CORS middleware
 app.add_middleware(
