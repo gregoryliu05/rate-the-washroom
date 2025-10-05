@@ -42,7 +42,8 @@ class Washroom(Base):
 
     # PostGIS geometry field for location
     geom = Column(Geometry('POINT', srid=4326), nullable=False)
-
+    lat = Column(Float, nullable=False)
+    long = Column(Float, nullable=False)
     # Washroom details
     opening_hours = Column(JSONB, nullable=True)
 
