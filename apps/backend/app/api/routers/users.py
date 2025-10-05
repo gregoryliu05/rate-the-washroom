@@ -18,13 +18,13 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=List[models.User])
+@router.get("/", response_model=List[schemas.UserOut])
 async def list_users(db: AsyncSession = Depends(deps.get_db)):
-    result = db.execute(select(models.User))
+    result = await db.execute(select(models.User))
     return result.scalars().all()
 
 
-@router.get("/{user_id}", response_model=models.User)
+@router.get("/{user_id}", response_model=schemas.UserOut)
 async def get_user(user_id: str, db: AsyncSession = Depends(deps.get_db)):
     try:
         user_id = UUID(user_id)
@@ -56,7 +56,7 @@ async def delete_user(user_id: str, db: AsyncSession = Depends(deps.get_db)):
 # fe: usercreate -> be -> be: userOut -> db
 @router.post("/", response_model = schemas.UserOut, status_code = status.HTTP_201_CREATED)
 async def create_user(user_in: schemas.UserCreate, db: AsyncSession = Depends(deps.get_db)):
-    new_user = models.user(
+    new_user = models.User(
         id = uuid4(),
         email = user_in.email,
         first_name = user_in.first_name,

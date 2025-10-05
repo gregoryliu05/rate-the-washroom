@@ -13,7 +13,7 @@ app = FastAPI(
 
 app.include_router(washrooms.router)
 app.include_router(users.router)
-app.include(reviews.router)
+app.include_router(reviews.router)
 
 # CORS middleware
 app.add_middleware(
