@@ -1,0 +1,170 @@
+[
+    {
+      "id": "1",
+      "name": "Central Park",
+      "description": "A large urban park in Manhattan featuring lakes, walking paths, and recreational facilities",
+      "address": "59th to 110th Street",
+      "city": "New York",
+      "country": "USA",
+      "lat": 40.785091,
+      "long": -73.968285,
+      "opening_hours": {
+        "monday": "6:00 AM - 1:00 AM",
+        "tuesday": "6:00 AM - 1:00 AM",
+        "wednesday": "6:00 AM - 1:00 AM",
+        "thursday": "6:00 AM - 1:00 AM",
+        "friday": "6:00 AM - 1:00 AM",
+        "saturday": "6:00 AM - 1:00 AM",
+        "sunday": "6:00 AM - 1:00 AM"
+      },
+      "overall_rating": 4.8,
+      "rating_count": 12543
+    },
+    {
+      "id": "2",
+      "name": "Times Square",
+      "description": "Major commercial intersection and entertainment hub known for its bright billboards and Broadway theaters",
+      "address": "Manhattan",
+      "city": "New York",
+      "country": "USA",
+      "lat": 40.7580,
+      "long": -73.9855,
+      "opening_hours": {
+        "monday": "24 hours",
+        "tuesday": "24 hours",
+        "wednesday": "24 hours",
+        "thursday": "24 hours",
+        "friday": "24 hours",
+        "saturday": "24 hours",
+        "sunday": "24 hours"
+      },
+      "overall_rating": 4.5,
+      "rating_count": 8921
+    },
+    {
+      "id": "3",
+      "name": "Empire State Building",
+      "description": "Iconic 102-story Art Deco skyscraper with observation decks offering panoramic city views",
+      "address": "20 W 34th St",
+      "city": "New York",
+      "country": "USA",
+      "lat": 40.7484,
+      "long": -73.9857,
+      "opening_hours": {
+        "monday": "10:00 AM - 10:00 PM",
+        "tuesday": "10:00 AM - 10:00 PM",
+        "wednesday": "10:00 AM - 10:00 PM",
+        "thursday": "10:00 AM - 10:00 PM",
+        "friday": "10:00 AM - 10:00 PM",
+        "saturday": "10:00 AM - 10:00 PM",
+        "sunday": "10:00 AM - 10:00 PM"
+      },
+      "overall_rating": 4.7,
+      "rating_count": 15678
+    },
+    {
+      "id": "4",
+      "name": "Brooklyn Bridge",
+      "description": "Historic hybrid cable-stayed/suspension bridge connecting Manhattan and Brooklyn with pedestrian walkway",
+      "address": "Brooklyn Bridge",
+      "city": "New York",
+      "country": "USA",
+      "lat": 40.7061,
+      "long": -73.9969,
+      "opening_hours": {
+        "monday": "24 hours",
+        "tuesday": "24 hours",
+        "wednesday": "24 hours",
+        "thursday": "24 hours",
+        "friday": "24 hours",
+        "saturday": "24 hours",
+        "sunday": "24 hours"
+      },
+      "overall_rating": 4.6,
+      "rating_count": 7432
+    },
+    {
+      "id": "5",
+      "name": "Statue of Liberty",
+      "description": "Iconic neoclassical sculpture on Liberty Island representing freedom and democracy",
+      "address": "Liberty Island",
+      "city": "New York",
+      "country": "USA",
+      "lat": 40.6892,
+      "long": -74.0445,
+      "opening_hours": {
+        "monday": "8:30 AM - 4:00 PM",
+        "tuesday": "8:30 AM - 4:00 PM",
+        "wednesday": "8:30 AM - 4:00 PM",
+        "thursday": "8:30 AM - 4:00 PM",
+        "friday": "8:30 AM - 4:00 PM",
+        "saturday": "8:30 AM - 4:00 PM",
+        "sunday": "8:30 AM - 4:00 PM"
+      },
+      "overall_rating": 4.9,
+      "rating_count": 19876
+    },
+    {
+      "id": "6",
+      "name": "Metropolitan Museum of Art",
+      "description": "Largest art museum in the Americas with collections spanning 5,000 years of world culture",
+      "address": "1000 5th Ave",
+      "city": "New York",
+      "country": "USA",
+      "lat": 40.7794,
+      "long": -73.9632,
+      "opening_hours": {
+        "monday": "10:00 AM - 5:00 PM",
+        "tuesday": "10:00 AM - 5:00 PM",
+        "wednesday": "10:00 AM - 5:00 PM",
+        "thursday": "10:00 AM - 5:00 PM",
+        "friday": "10:00 AM - 9:00 PM",
+        "saturday": "10:00 AM - 9:00 PM",
+        "sunday": "10:00 AM - 5:00 PM"
+      },
+      "overall_rating": 4.8,
+      "rating_count": 23456
+    },
+    {
+      "id": "7",
+      "name": "Eiffel Tower",
+      "description": "Iron lattice tower on the Champ de Mars in Paris, France, one of the most recognizable structures in the world",
+      "address": "Champ de Mars, 5 Avenue Anatole France",
+      "city": "Paris",
+      "country": "France",
+      "lat": 48.8584,
+      "long": 2.2945,
+      "opening_hours": {
+        "monday": "9:30 AM - 10:45 PM",
+        "tuesday": "9:30 AM - 10:45 PM",
+        "wednesday": "9:30 AM - 10:45 PM",
+        "thursday": "9:30 AM - 10:45 PM",
+        "friday": "9:30 AM - 10:45 PM",
+        "saturday": "9:30 AM - 10:45 PM",
+        "sunday": "9:30 AM - 10:45 PM"
+      },
+      "overall_rating": 4.7,
+      "rating_count": 28765
+    },
+    {
+      "id": "8",
+      "name": "London Eye",
+      "description": "Giant Ferris wheel on the South Bank of the River Thames offering views of central London",
+      "address": "Riverside Building, County Hall",
+      "city": "London",
+      "country": "UK",
+      "lat": 51.5033,
+      "long": -0.1195,
+      "opening_hours": {
+        "monday": "11:00 AM - 6:00 PM",
+        "tuesday": "11:00 AM - 6:00 PM",
+        "wednesday": "11:00 AM - 6:00 PM",
+        "thursday": "11:00 AM - 6:00 PM",
+        "friday": "11:00 AM - 6:00 PM",
+        "saturday": "11:00 AM - 6:00 PM",
+        "sunday": "11:00 AM - 6:00 PM"
+      },
+      "overall_rating": 4.4,
+      "rating_count": 15678
+    }
+  ]

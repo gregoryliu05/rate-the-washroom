@@ -1,7 +1,13 @@
 'use client';
+import ClosestPlaces from './components/listing';
 import Navbar from './components/navbar';
 import Map from './components/map';
 import { useEffect } from 'react';
+
+const userLocation = {
+  lat: 40.7589, // Example: Times Square area in NYC
+  long: -73.9851
+};
 
 export default function Home() {
   return (
@@ -17,10 +23,12 @@ export default function Home() {
           {/* <Map /> */}
         </div>
       </div>
-      <div id="list" className="h-32 bg-gray-100 flex justify-center items-center">
-        <ul>
-          <li>List items</li>
-        </ul>
+      <div id="list" className="h-80 bg-gray-100 flex justify-center items-center">
+        <ClosestPlaces 
+        userLocation={userLocation}
+        maxDistance={10000}   // 5km radius
+        limit={25}         // Show top 8 closest places
+      />
       </div> 
     </div>
   );
