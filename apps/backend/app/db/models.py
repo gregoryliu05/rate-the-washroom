@@ -12,13 +12,14 @@ import uuid
 
 Base = declarative_base()
 
+
 class User(Base):
     __tablename__ = "users"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
-    full_name = Column(String(50), nullable=False)
+    first_name = Column(String(50), nullable=False)
     last_name = Column(String(50), nullable=False)
     last_login = Column(DateTime, nullable=True)
 
@@ -37,22 +38,13 @@ class Washroom(Base):
     address = Column(String(500), nullable=True)
     city = Column(String(100), nullable=True)
     country = Column(String(100), nullable=True)
-    postal_code = Column(String(20), nullable=True)
-
 
     # PostGIS geometry field for location
     geom = Column(Geometry('POINT', srid=4326), nullable=False)
 
     # Washroom details
-    is_accessible = Column(Boolean, default=False, nullable=False)
-    has_paper_towels = Column(Boolean, default=False, nullable=False)
-    has_hand_dryer = Column(Boolean, default=False, nullable=False)
-    has_soap = Column(Boolean, default=False, nullable=False)
-    is_clean = Column(Boolean, default=True, nullable=False)
-    is_free = Column(Boolean, default=True, nullable=False)
-    opening_hours = Column(Text, nullable=True)  # JSON string for complex hours
-    phone = Column(String(50), nullable=True)
-    website = Column(String(500), nullable=True)
+    opening_hours = Column(JSONB, nullable=True)
+
 
     # Metadata
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
@@ -74,13 +66,11 @@ class Review(Base):
 
     # Rating (1-5 stars)
     overall_rating = Column(Integer, nullable=False)  # 1-5
-    cleanliness_rating = Column(Integer, nullable=True)  # 1-5
-    accessibility_rating = Column(Integer, nullable=True)  # 1-5
-    amenities_rating = Column(Integer, nullable=True)  # 1-5
+
 
     # Review content
     title = Column(String(200), nullable=True)
-    content = Column(Text, nullable=True)
+    description = Column(Text, nullable=True)
 
     # Metadata
     likes = Column(Integer, default=0, nullable=False)  # Count of helpful votes
@@ -120,10 +110,6 @@ class Photo(Base):
     caption = Column(Text, nullable=True)
     is_verified = Column(Boolean, default=False, nullable=False)
     is_approved = Column(Boolean, default=True, nullable=False)
-
-    # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # Relationships
     washroom = relationship("Washroom", back_populates="photos")
