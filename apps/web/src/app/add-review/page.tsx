@@ -6,7 +6,7 @@ function AddReview() {
             <div className="text-center py-4">
                 <h1 className="text-2xl font-bold">Add Review</h1>
             </div>
-            <div id="navbar" className="py-4">
+            <div id="navbar" className="py-4 w-full h-full flex justify-center items-center">
                 <Navbar />
             </div>
             {/* Main section: block layout for simple centering */}

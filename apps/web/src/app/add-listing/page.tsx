@@ -6,7 +6,7 @@ function AddListing() {
             <div className="text-center py-4">
                 <h1 className="text-2xl font-bold">Add Listing</h1>
             </div>
-            <div id="navbar" className="py-4">
+            <div id="navbar" className="py-4 w-full h-full flex justify-center items-center">
                 <Navbar />
             </div>
             <main className="flex-1 pt-8">
