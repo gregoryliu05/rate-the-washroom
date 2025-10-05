@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, text
 from typing import List, Optional
 import uuid
 
@@ -18,10 +18,53 @@ router = APIRouter(
 
 
 @router.get("/", response_model=List[schemas.WashroomOut])
-async def get_washrooms(
-    min_lat: Optional[float] = Query(None, description="Minimum latitude"),
+async def get_washrooms_in_bounds(
+    min_lat: float = Query(... , ge = -90, le =90),
+    min_lon: float = Query(..., ge = -180, le = 180),
+    max_lat: float = Query(..., ge = -90, le = 90),
+    max_lon: float = Query(..., ge= -180, le = 180),
+    db: AsyncSession = Depends(deps.get_db)
 ):
-    pass
+    query = text("""
+        SELECT *
+        FROM washrooms
+            WHERE ST_Within(
+                 geom,
+                 ST_MakeEnvelope(:min_lon, :min_lat, :max_lon, :max_lat, 4326))
+
+
+    """)
+
+    result = await db.execute(query, {
+        "min_lon": min_lon,
+        "min_lat": min_lat,
+        "max_lon": max_lon,
+        "max_lat": max_lat
+    })
+
+    washrooms = result.scalars().all()
+    # Convert geom to GeoJSON for each washroom
+    return [
+        schemas.WashroomOut(
+            id=str(w.id),
+            name=w.name,
+            description=w.description,
+            address=w.address,
+            city=w.city,
+            country=w.country,
+            geom={
+                "type": "Point",
+                "coordinates": [to_shape(w.geom).x, to_shape(w.geom).y]
+            },
+            lat=w.lat,
+            long=w.long,
+            opening_hours=w.opening_hours,
+            overall_rating=w.overall_rating,
+            rating_count=w.rating_count,
+            created_by=str(w.created_by)
+        )
+        for w in washrooms
+    ]
 
 
 @router.get("/{washroom_id}", response_model = schemas.WashroomOut)
@@ -71,7 +114,6 @@ async def create_washroom(washroom_in: schemas.WashroomCreate, db: AsyncSession 
         geom = WKTElement(washroom_in.geom, srid=4326)
 
     new_washroom = models.Washroom(
-        id=uuid.uuid4(),
         name=washroom_in.name,
         description=washroom_in.description,
         address=washroom_in.address,
