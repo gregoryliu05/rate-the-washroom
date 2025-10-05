@@ -3,7 +3,7 @@ import ProfileIcon from "./profileicon"
 
 export default function Navbar() {
     return (
-        <nav className="navbar w-full bg-gray-100 p-4 grid grid-cols-[1fr_auto_1fr] items-center ">
+        <nav className="navbar w-85/100 bg-gray-100 p-5 grid grid-cols-[1fr_auto_1fr] items-center ">
             <Link href="/" className="bg-green-200 text-xl font-bold flex justify-self-start">
                 Poop Map
             </Link>
