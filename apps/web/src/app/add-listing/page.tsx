@@ -1,15 +1,16 @@
 import Navbar from "../components/navbar";
 
-
 function AddListing() {
     return (
-        <>
-            <div>Add Listing</div>
-            <div id='navbar' className="w-full h-full flex justify-center items-center">
+        <div className="min-h-screen flex flex-col">
+            <div className="text-center py-4">
+                <h1 className="text-2xl font-bold">Add Listing</h1>
+            </div>
+            <div id="navbar" className="py-4">
                 <Navbar />
             </div>
-            <div className="flex justify-center items-center min-h-screen">
-                <form className="flex flex-col items-center space-y-4 w-full max-w-md">
+            <main className="flex-1 pt-8">
+                <form className="flex flex-col space-y-4 w-2/3 max-w-2xl mx-auto px-4">
                     <input 
                         type="text" 
                         placeholder="Name of Washroom" 
@@ -30,7 +31,6 @@ function AddListing() {
                         placeholder="City" 
                         className="w-full p-3 border border-gray-300 rounded-lg"
                     />
-                    
                     <div className="flex space-x-4 w-full">
                         <button 
                             type="submit" 
@@ -46,8 +46,8 @@ function AddListing() {
                         </button>
                     </div>
                 </form>
-            </div>
-        </>
+            </main>
+        </div>
     )
 }
 
