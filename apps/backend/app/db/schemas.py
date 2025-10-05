@@ -33,6 +33,8 @@ class WashroomOut(BaseModel):
     city: str
     country: str
     geom: str  # You can use str, dict, or a custom type depending on serialization
+    lat: float
+    long: float
     opening_hours: dict  # Or Optional[dict] if nullable
     overall_rating: float
     rating_count: int
@@ -50,6 +52,8 @@ class WashroomCreate(BaseModel):
     country: str
     geom: str  # You can use str, dict, or a custom type depending on serialization
     opening_hours: dict  # Or Optional[dict] if nullable
+    lat: float
+    long: float
     overall_rating: float
     rating_count: int
     created_by: str  # UUID as string
