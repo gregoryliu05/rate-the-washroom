@@ -1,5 +1,5 @@
 
-/*
+
 interface Listing {
   id?: string;
   name: string;
@@ -20,11 +20,12 @@ interface Review {
 
 // This file is used to define the API endpoints for the application.
 // It is used to make requests to the backend API.
-// const API_URL = url;
+const API_URL = 'http://localhost:8000';
 
 export const createListing = async (listing: Listing) => {
-    const response = await fetch(`${url}/listings`, {
+    const response = await fetch(`${API_URL}/listings`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(listing),
     });
     return response.json();
@@ -32,7 +33,7 @@ export const createListing = async (listing: Listing) => {
 
 export const getListings = async () => {
     try {
-        const response = await fetch('${url}/listings');
+        const response = await fetch(`${API_URL}/listings`);
 
         if (!response.ok)
             throw new Error('Failed to fetch listings');
@@ -46,15 +47,16 @@ export const getListings = async () => {
 }
 
 export const createReview = async (review: Review) => {
-    const response = await fetch(`${url}/reviews`, {
+    const response = await fetch(`${API_URL}/reviews`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(review),
     });
     return response.json();
 }
 
 export const getReviews = async () => {
-    const response = await fetch(`${url}/reviews`);
+    const response = await fetch(`${API_URL}/reviews`);
     return response.json();
 }
-*/
+

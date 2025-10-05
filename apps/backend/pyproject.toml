@@ -40,8 +40,8 @@ dev = [
 ]
 
 [project.scripts]
-migrate = "alembic upgrade head"
-migrate-create = "alembic revision --autogenerate -m"
+# migrate = "alembic upgrade head"
+# migrate-create = "alembic revision --autogenerate -m"
 
 [tool.setuptools.packages.find]
 where = ["."]

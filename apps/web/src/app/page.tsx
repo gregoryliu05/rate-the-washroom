@@ -6,15 +6,11 @@ import { useEffect, useState } from 'react';
 import { Listing } from '../types';
 
 export default function Home() {
-  //const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [nearbyListings, setNearbyListings] = useState<Listing[]>([]);
   const [locationPermission, setLocationPermission] = useState<'granted' | 'denied' | 'pending'>('pending');
   const [loading, setLoading] = useState(false);
 
-  const userLocation = {
-    lat: 49.2827,
-    long: 123.1207
-  };
 
   // Request user location
   const requestLocation = () => {
@@ -42,13 +38,14 @@ export default function Home() {
   // Function to fetch nearby listings from API
   const fetchNearbyListings = async (location: { lat: number; lng: number }) => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch(`/api/listings/nearby?lat=${location.lat}&lng=${location.lng}`);
-      // const listings = await response.json();
-      // setNearbyListings(listings);
+      const response = await fetch(`http://localhost:8000/listings/nearby?lat=${location.lat}&lng=${location.lng}`);
       
-      // For now, set empty array until API is ready
-      setNearbyListings([]);
+      if (!response.ok) {
+        throw new Error('Failed to fetch nearby listings');
+      }
+      
+      const listings = await response.json();
+      setNearbyListings(listings);
     } catch (error) {
       console.error('Error fetching nearby listings:', error);
       setNearbyListings([]);
@@ -69,11 +66,13 @@ export default function Home() {
         </div>
       </div>
       <div id="list" className="h-80 bg-gray-100 flex justify-center items-center">
-        <ClosestPlaces 
-          userLocation={userLocation}
-          maxDistance={100000}   // 10km radius
-          limit={25}            // Show top 25 closest places
-        />
+        {userLocation && (
+          <ClosestPlaces 
+            userLocation={{ lat: userLocation.lat, long: userLocation.lng }}
+            maxDistance={100000}   // 10km radius
+            limit={25}            // Show top 25 closest places
+          />
+        )}
       </div> 
     </div>
   );
