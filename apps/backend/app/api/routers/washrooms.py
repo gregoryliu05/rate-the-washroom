@@ -104,7 +104,11 @@ async def get_washroom(washroom_id: str, db: AsyncSession = Depends(deps.get_db)
 
 
 @router.post("/", response_model=schemas.WashroomOut, status_code=status.HTTP_201_CREATED)
-async def create_washroom(washroom_in: schemas.WashroomCreate, db: AsyncSession = Depends(deps.get_db)):
+async def create_washroom(
+    washroom_in: schemas.WashroomCreate, 
+    db: AsyncSession = Depends(deps.get_db),
+    _: dict = Depends(deps.get_current_user)
+    ):
     # Convert GeoJSON dict to WKT string if needed
     if isinstance(washroom_in.geom, dict):
         coords = washroom_in.geom["coordinates"]

@@ -52,7 +52,11 @@ async def get_review_by_washroom(washroom_id: str, db: AsyncSession = Depends(de
 
 # POST review
 @router.post("/", response_model=schemas.ReviewOutByWashroom, status_code=status.HTTP_201_CREATED)
-async def create_Review(review_in: schemas.ReviewCreate, db: AsyncSession = Depends(deps.get_db)):
+async def create_Review(
+    review_in: schemas.ReviewCreate,
+    db: AsyncSession = Depends(deps.get_db),
+    _: dict = Depends(deps.get_current_user)
+    ):
 
     # check first for existing review for washroom by user
     try:
@@ -60,6 +64,8 @@ async def create_Review(review_in: schemas.ReviewCreate, db: AsyncSession = Depe
         user_id = UUID(review_in.user_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid Washroom ID or User ID format")
+
+    
 
     duplicate_check = await db.execute(
         select(models.Review)
@@ -74,6 +80,7 @@ async def create_Review(review_in: schemas.ReviewCreate, db: AsyncSession = Depe
 
     if duplicate_results:
         raise HTTPException(status_code=400, detail="User already has review for Washroom")
+
 
     # Create new review
     new_review = models.Review(
@@ -93,8 +100,11 @@ async def create_Review(review_in: schemas.ReviewCreate, db: AsyncSession = Depe
 
 # PATCH review
 @router.patch("/{review_id}", status_code=status.HTTP_200_OK )
-async def update_review(review_id: str,review_update: schemas.ReviewEdit,
-    db: AsyncSession = Depends(deps.get_db)
+async def update_review(
+    review_id: str,
+    review_update: schemas.ReviewEdit,
+    db: AsyncSession = Depends(deps.get_db),
+    _: dict = Depends(deps.get_current_user)
     ):
     try:
         review_id = UUID(review_id)
@@ -126,6 +136,7 @@ async def update_review(review_id: str,review_update: schemas.ReviewEdit,
 @router.delete("/{review_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_review(
     review_id: str,
+    _: dict = Depends(deps.get_current_user),
     db: AsyncSession = Depends(deps.get_db)
 ):
     """Delete a review"""
