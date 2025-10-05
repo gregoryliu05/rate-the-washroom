@@ -6,3 +6,15 @@
     "react-dom": "^19.2.0"
   }
 }
+{
+  "dependencies": {
+    "next": "^15.5.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  }
+}
+{
+  "dependencies": {
+    "@react-google-maps/api": "^2.20.7"
+  }
+}
