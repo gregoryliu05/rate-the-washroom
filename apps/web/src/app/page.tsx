@@ -1,4 +1,5 @@
 'use client';
+import ClosestPlaces from './components/listing';
 import Navbar from './components/navbar';
 import Map from './components/map';
 import { useEffect, useState } from 'react';
@@ -62,7 +63,12 @@ export default function Home() {
           {/* <Map /> */}
         </div>
       </div>
-      <div id="list" className="h-64 bg-gray-50 border-t">
+      <div id="list" className="h-80 bg-gray-100 flex justify-center items-center">
+        <ClosestPlaces 
+          userLocation={userLocation}
+          maxDistance={10}   // 10km radius
+          limit={25}            // Show top 25 closest places
+        />
       </div> 
     </div>
   );
