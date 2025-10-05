@@ -19,22 +19,22 @@ def init_database():
     """Initialize database with tables and PostGIS extension"""
     try:
         print("🚀 Starting database initialization...")
-        
+
         # Create engine
         engine = create_engine(settings.DATABASE_URL, echo=True)
-        
+
         # Enable PostGIS extension
         print("📦 Enabling PostGIS extension...")
         with engine.connect() as connection:
             connection.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
             connection.commit()
             print("✅ PostGIS extension enabled")
-        
+
         # Create all tables
         print("🏗️  Creating database tables...")
         Base.metadata.create_all(bind=engine)
         print("✅ Database tables created successfully!")
-        
+
         # Create indexes manually with IF NOT EXISTS
         print("📊 Creating indexes...")
         with engine.connect() as connection:
@@ -42,22 +42,20 @@ def init_database():
                 "CREATE INDEX IF NOT EXISTS idx_washrooms_geom ON washrooms USING gist (geom);",
                 "CREATE INDEX IF NOT EXISTS idx_washrooms_city ON washrooms (city);",
                 "CREATE INDEX IF NOT EXISTS idx_washrooms_created_by ON washrooms (created_by);",
-                "CREATE INDEX IF NOT EXISTS idx_washrooms_is_active ON washrooms (is_active);",
                 "CREATE INDEX IF NOT EXISTS idx_reviews_washroom_id ON reviews (washroom_id);",
                 "CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews (user_id);",
-                "CREATE INDEX IF NOT EXISTS idx_reviews_overall_rating ON reviews (overall_rating);",
+                "CREATE INDEX IF NOT EXISTS idx_reviews_rating ON reviews (rating);",
                 "CREATE INDEX IF NOT EXISTS idx_reviews_created_at ON reviews (created_at);",
                 "CREATE INDEX IF NOT EXISTS idx_photos_washroom_id ON photos (washroom_id);",
                 "CREATE INDEX IF NOT EXISTS idx_photos_user_id ON photos (user_id);",
                 "CREATE INDEX IF NOT EXISTS idx_photos_is_approved ON photos (is_approved);",
-                "CREATE INDEX IF NOT EXISTS idx_photos_created_at ON photos (created_at);",
                 "CREATE INDEX IF NOT EXISTS idx_reports_washroom_id ON reports (washroom_id);",
                 "CREATE INDEX IF NOT EXISTS idx_reports_user_id ON reports (user_id);",
                 "CREATE INDEX IF NOT EXISTS idx_reports_status ON reports (status);",
                 "CREATE INDEX IF NOT EXISTS idx_reports_priority ON reports (priority);",
                 "CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports (created_at);",
             ]
-            
+
             for index_sql in indexes:
                 try:
                     connection.execute(text(index_sql))
@@ -67,31 +65,31 @@ def init_database():
                         print(f"ℹ️  Index already exists: {index_sql.split()[5]}")
                     else:
                         print(f"⚠️  Index creation warning: {e}")
-            
+
             connection.commit()
             print("✅ All indexes processed")
-        
+
         # Verify tables were created
         with engine.connect() as connection:
             result = connection.execute(text("""
-                SELECT table_name 
-                FROM information_schema.tables 
-                WHERE table_schema = 'public' 
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
                 AND table_type = 'BASE TABLE'
                 ORDER BY table_name;
             """))
-            
+
             tables = [row[0] for row in result]
             print(f"📋 Created tables: {', '.join(tables)}")
-            
+
             # Check if PostGIS is working
             postgis_result = connection.execute(text("SELECT PostGIS_Version();"))
             version = postgis_result.scalar()
             print(f"🗺️  PostGIS version: {version}")
-        
+
         print("🎉 Database initialization completed successfully!")
         return True
-        
+
     except SQLAlchemyError as e:
         print(f"❌ Database error: {e}")
         return False

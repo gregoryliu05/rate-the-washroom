@@ -48,6 +48,7 @@ class Washroom(Base):
 
     overall_rating = Column(Float, default=0.0)
     rating_count = Column(Integer, default=0)
+    floor = Column(Integer, nullable=True)
 
     # Metadata
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
@@ -68,7 +69,7 @@ class Review(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 
     # Rating (1-5 stars)
-    overall_rating = Column(Integer, nullable=False)  # 1-5
+    rating = Column(Integer, nullable=False)  # 1-5
 
 
     # Review content
