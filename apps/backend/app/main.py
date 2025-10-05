@@ -1,8 +1,10 @@
 from fastapi import FastAPI
+from dotenv import load_dotenv
+load_dotenv()
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.settings import settings
+from app.core.security import *
 from app.api.routers import washrooms, users, reviews
-
 # Create FastAPI app
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -18,7 +20,7 @@ app.include_router(reviews.router)
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=[settings.BACKEND_CORS_ORIGINS, "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
