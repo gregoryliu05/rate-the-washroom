@@ -1,9 +1,10 @@
 from pydantic import BaseModel
 from datetime import datetime
-import uuid
+from uuid import UUID
+from typing import Optional
 
 class UserCreate(BaseModel):
-    username: str
+    username: UUID
     email: str
     first_name: str
     last_name: str
@@ -14,67 +15,19 @@ class UserCreate(BaseModel):
 
 
 class UserOut(BaseModel):
-    id: str
+    id: UUID
     username: str
     email: str
     first_name: str
     last_name: str
     password: str
 
-<<<<<<< HEAD
-
-### REVIEW ###
-
-# return all but washroom_id since already known
-class ReviewOutByWashroom(BaseModel):
-    id: uuid
-    user_id: uuid
-    rating: int
-    title: str
-    description: str
-    likes : int
-    created_at: datetime
-    updated_at: datetime
-
-# return all but user_id since already known
-class ReviewOutByUser(BaseModel):
-    id: uuid
-    washroom_id: uuid
-    rating: int
-    title: str
-    description: str
-    likes : int
-    created_at: datetime
-    updated_at: datetime
-
-# creating requires all attributes
-class ReviewCreate(BaseModel):
-    id: uuid
-    user_id
-    washroom_id: uuid
-    rating: int
-    title: str
-    description: str
-    likes : int
-    created_at: datetime
-    updated_at: datetime
-
-# 
-class ReviewEdit(BaseModel):
-    id: uuid
-    user_id
-    washroom_id: uuid
-    rating: int
-    title: str
-    description: str
-    updated_at: datetime
-=======
     class Config:
         from_attributes = True
 
 
 class WashroomOut(BaseModel):
-    id: str
+    id: UUID
     name: str
     description: str
     address: str
@@ -86,7 +39,7 @@ class WashroomOut(BaseModel):
     opening_hours: dict  # Or Optional[dict] if nullable
     overall_rating: float
     rating_count: int
-    created_by: str  # UUID as string
+    created_by: UUID 
 
     class Config:
         from_attributes = True
@@ -104,10 +57,61 @@ class WashroomCreate(BaseModel):
     long: float
     overall_rating: float
     rating_count: int
-    created_by: str  # UUID as string
+    created_by: UUID  # UUID type
 
     class Config:
         from_attributes = True
->>>>>>> 9afc53a04490049289290568bf031f37ac05af3b
 
 
+
+
+### REVIEW ###
+
+
+# return all but washroom_id since already known
+class ReviewOutByWashroom(BaseModel):
+    id: UUID
+    user_id: UUID
+    rating: int
+    title: str
+    description: str
+    likes : int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# return all but user_id since already known
+class ReviewOutByUser(BaseModel):
+    id: UUID
+    washroom_id: UUID
+    rating: int
+    title: str
+    description: str
+    likes : int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# creating requires all attributes
+class ReviewCreate(BaseModel):
+    washroom_id: UUID
+    user_id: UUID
+    rating: int
+    title: Optional[str] = None
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ReviewEdit(BaseModel):
+    rating: int
+    title: Optional[str] = None
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
