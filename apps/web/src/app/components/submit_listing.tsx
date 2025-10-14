@@ -9,7 +9,7 @@ interface Listing {
   coordinates: { lat: number; lng: number };
 }
 
-function handleSubmitListing(listing: Listing) {
+export default function HandleSubmitListing(listing: Listing) {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [address, setAddress] = useState('');
@@ -32,5 +32,3 @@ function handleSubmitListing(listing: Listing) {
         </form>
     )
 }
-
-export default handleSubmitListing;

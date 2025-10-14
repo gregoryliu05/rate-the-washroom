@@ -1,7 +1,7 @@
 'use client';
 import ClosestPlaces from './components/listing';
 import Navbar from './components/navbar';
-import Map from './components/map';
+import MapBoxMap from './components/map';
 import { useEffect, useState } from 'react';
 import { Listing } from '../types';
 
@@ -11,20 +11,37 @@ export default function Home() {
   const [locationPermission, setLocationPermission] = useState<'granted' | 'denied' | 'pending'>('pending');
   const [loading, setLoading] = useState(false);
 
+  const hardcodelocation = {
+    lat: 43,
+    lon: 123
+  }
+
+  useEffect(() => {
+    console.log("request ran!")
+    requestLocation()
+  }, [])
 
   // Request user location
   const requestLocation = () => {
     setLoading(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        // TODO: have to get the coords from the map
         const location = {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         };
+
+        const bounds = {
+          min_lat: 43,
+          min_lon: 84,
+          max_lat: 84,
+          max_lon: 84
+        }
+
         setUserLocation(location);
         setLocationPermission('granted');
         // TODO: Fetch nearby listings from API
-        fetchNearbyListings(location);
         setLoading(false);
       },
       (error) => {
@@ -35,22 +52,6 @@ export default function Home() {
     );
   };
 
-  // Function to fetch nearby listings from API
-  const fetchNearbyListings = async (location: { lat: number; lng: number }) => {
-    try {
-      const response = await fetch(`http://localhost:8000/listings/nearby?lat=${location.lat}&lng=${location.lng}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch nearby listings');
-      }
-      
-      const listings = await response.json();
-      setNearbyListings(listings);
-    } catch (error) {
-      console.error('Error fetching nearby listings:', error);
-      setNearbyListings([]);
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -62,18 +63,18 @@ export default function Home() {
       </div>
       <div id="map" className="flex-1 flex justify-center items-center p-4">
         <div className="w-full max-w-4xl">
-          {/* <Map /> */}
+         <MapBoxMap></MapBoxMap>
         </div>
       </div>
       <div id="list" className="h-80 bg-gray-100 flex justify-center items-center">
-        {userLocation && (
-          <ClosestPlaces 
-            userLocation={{ lat: userLocation.lat, long: userLocation.lng }}
+        {hardcodelocation && (
+          <ClosestPlaces
+            userLocation={{ lat: hardcodelocation.lat, long: hardcodelocation.lon }}
             maxDistance={100000}   // 10km radius
             limit={25}            // Show top 25 closest places
           />
         )}
-      </div> 
+      </div>
     </div>
   );
 }

@@ -9,7 +9,7 @@ interface Review {
   userId: string;
 }
 
-const handleSubmitReview = (review: Review) => {
+export default function HandleSubmitReview(review: Review) {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [rating, setRating] = useState(0);
@@ -33,4 +33,3 @@ const handleSubmitReview = (review: Review) => {
     )
 }
 
-export default handleSubmitReview;

@@ -16,7 +16,17 @@ export interface Location {
     rating_count: number;
     distance?: number;
 }
-  
+
+export interface Listing {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  description: string;
+  coordinates: { lat: number; lng: number };
+}
+
+
 export interface ClosestPlacesProps {
     userLocation: {
       lat: number;
@@ -25,4 +35,10 @@ export interface ClosestPlacesProps {
     maxDistance?: number; // in kilometers
     limit?: number;
   }
-  
+
+export interface MapBounds {
+  min_lat: number,
+  min_lon: number,
+  max_lat: number,
+  max_lon: number
+}

@@ -18,31 +18,39 @@ router = APIRouter(
 
 
 @router.get("/", response_model=List[schemas.WashroomOut])
-async def get_washrooms_in_bounds(
-    min_lat: float = Query(... , ge = -90, le =90),
-    min_lon: float = Query(..., ge = -180, le = 180),
-    max_lat: float = Query(..., ge = -90, le = 90),
-    max_lon: float = Query(..., ge= -180, le = 180),
+def get_washrooms_in_bounds(
+    min_lat: float = Query(None , ge = -90, le =90),
+    min_lon: float = Query(None, ge = -180, le = 180),
+    max_lat: float = Query(None, ge = -90, le = 90),
+    max_lon: float = Query(None, ge= -180, le = 180),
     db: AsyncSession = Depends(deps.get_db)
 ):
-    query = text("""
-        SELECT *
-        FROM washrooms
-            WHERE ST_Within(
-                 geom,
-                 ST_MakeEnvelope(:min_lon, :min_lat, :max_lon, :max_lat, 4326))
+
+    query = ""
+    if all([min_lat, min_lon, max_lat, max_lon]):
+        query = text("""
+            SELECT *
+            FROM washrooms
+                WHERE ST_Within(
+                    geom,
+                    ST_MakeEnvelope(:min_lon, :min_lat, :max_lon, :max_lat, 4326))
 
 
-    """)
+        """)
+    else:
+        query = text("""
+            SELECT * from washrooms
+                     """)
 
-    result = await db.execute(query, {
+
+    result = db.execute(query, {
         "min_lon": min_lon,
         "min_lat": min_lat,
         "max_lon": max_lon,
         "max_lat": max_lat
     })
 
-    washrooms = result.scalars().all()
+    washrooms = result.fetchall()
     # Convert geom to GeoJSON for each washroom
     return [
         schemas.WashroomOut(
