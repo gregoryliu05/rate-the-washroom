@@ -46,7 +46,7 @@ def load_washroom_data(csv_file_path: str) -> pd.DataFrame:
         # Parse coordinates from Geom field
         geom_coords = df['Geom'].apply(parse_geom_coordinates)
         df['lat'] = [coord[0] for coord in geom_coords]
-        df['lon'] = [coord[1] for coord in geom_coords]
+        df['long'] = [coord[1] for coord in geom_coords]
         
         # Clean and standardize the DataFrame for database insertion
         db_df = pd.DataFrame({
@@ -56,7 +56,7 @@ def load_washroom_data(csv_file_path: str) -> pd.DataFrame:
             'city': 'Vancouver',
             'country': 'Canada',
             'lat': pd.to_numeric(df['lat'], errors='coerce').astype('float64'),
-            'long': pd.to_numeric(df['lon'], errors='coerce').astype('float64'),
+            'long': pd.to_numeric(df['long'], errors='coerce').astype('float64'),
             'geom': df['Geom'].fillna('').astype(str),  # Will be converted to PostGIS Geometry
             'opening_hours': df['Summer hours'].fillna('').astype(str),  # Will be converted to JSONB
             'overall_rating': 0.0,  # Float with default
@@ -66,7 +66,7 @@ def load_washroom_data(csv_file_path: str) -> pd.DataFrame:
         })
         
         # Remove rows with invalid coordinates
-        db_df = db_df.dropna(subset=['lat', 'lon'])
+        db_df = db_df.dropna(subset=['lat', 'long'])
         
         return db_df
         
@@ -92,9 +92,9 @@ def print_dataframe_summary(df: pd.DataFrame):
     if 'description' in df.columns:
         print(f"Types: {df['description'].value_counts().head(5).to_dict()}")
     
-    if 'lat' in df.columns and 'lon' in df.columns:
+    if 'lat' in df.columns and 'long' in df.columns:
         print(f"Lat range: {df['lat'].min():.4f} to {df['lat'].max():.4f}")
-        print(f"Lon range: {df['lon'].min():.4f} to {df['lon'].max():.4f}")
+        print(f"Lon range: {df['long'].min():.4f} to {df['long'].max():.4f}")
 
 
 def create_washroom_instances(df: pd.DataFrame) -> List[dict]:
@@ -132,33 +132,32 @@ def create_washroom_instances(df: pd.DataFrame) -> List[dict]:
     return washrooms
 
 
-def main():
+def csv2Dict():
     """
     Main function to load CSV data into DataFrame
     """
     # File path
-    csv_file = Path(__file__).parent / 'van-public-washroom-data.csv'
+    van_public_csv_file = Path(__file__).parent / 'van-public-washroom-data.csv'
+    sfu_csv_file = Path(__file__).parent / 'sfu_washrooms.csv'
     
-    print("Vancouver Public Washroom Data Loader")
-    print(f"CSV file: {csv_file}")
+    print("CSV data load into DB")
+    print(f"CSV files: \n {van_public_csv_file} \n {sfu_csv_file}")
     
     # Load the data
-    df = load_washroom_data(str(csv_file))
+    # TODO: Load and return SFU DATA
+    van_public_df = load_washroom_data(str(van_public_csv_file))
     
-    if df.empty:
-        print("No data loaded. Exiting.")
+    if van_public_df.empty:
+        print("vancouver public csv failed to load. exiting.")
         return 1
     
     # Print summary
-    print_dataframe_summary(df)
+    print_dataframe_summary(van_public_df)
     
     # Create washroom instances for database insertion
-    washrooms = create_washroom_instances(df)
+    washrooms = create_washroom_instances(van_public_df)
     print(f"Created {len(washrooms)} washroom instances ready for database insertion")
     
     return 0
 
 
-if __name__ == '__main__':
-    exit_code = main()
-    sys.exit(exit_code)
