@@ -7,9 +7,13 @@ Reads CSV data into a pandas DataFrame for database population
 import pandas as pd
 import json
 import sys
+import os
 from pathlib import Path
 from typing import Optional, List
 import uuid
+
+# Add the app directory to the Python path for imports
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 
 def parse_geom_coordinates(geom_str: str) -> tuple[Optional[float], Optional[float]]:
@@ -132,9 +136,9 @@ def create_washroom_instances(df: pd.DataFrame) -> List[dict]:
     return washrooms
 
 
-def csv2Dict():
+def csv2Dict() -> List[dict]:
     """
-    Main function to load CSV data into DataFrame
+    Main function to load CSV data and return list of dictionaries for database insertion
     """
     # File path
     van_public_csv_file = Path(__file__).parent / 'van-public-washroom-data.csv'
@@ -149,7 +153,7 @@ def csv2Dict():
 
     if van_public_df.empty:
         print("vancouver public csv failed to load. exiting.")
-        return 1
+        return []
 
     # Print summary
     print_dataframe_summary(van_public_df)
@@ -158,10 +162,88 @@ def csv2Dict():
     washrooms = create_washroom_instances(van_public_df)
     print(f"Created {len(washrooms)} washroom instances ready for database insertion")
 
-    return 0
+    return washrooms
+
+
+def load_data_to_database():
+    """
+    Load CSV data directly into the database
+    """
+    try:
+        # Import here to avoid circular imports
+        from app.db.models import Washroom, Amenity
+        from app.db.session import SessionLocal
+        from geoalchemy2.shape import from_shape
+        from shapely.geometry import Point
+        
+        # Get washroom data using your csv2Dict function
+        washrooms_data = csv2Dict()
+        
+        if not washrooms_data:
+            print("No washroom data to seed")
+            return True
+            
+        # Check if database already has washroom data
+        db = SessionLocal()
+        try:
+            existing_count = db.query(Washroom).count()
+            if existing_count > 0:
+                print(f"Database already has {existing_count} washrooms, skipping seed")
+                return True
+            
+            # Get or create "Accessible" amenity
+            accessible_amenity = db.query(Amenity).filter(Amenity.name == "Accessible").first()
+            if not accessible_amenity:
+                accessible_amenity = Amenity(name="Accessible")
+                db.add(accessible_amenity)
+                db.flush()  # Flush to get the ID
+            
+            # Insert washroom data
+            inserted_count = 0
+            for washroom_data in washrooms_data:
+                # Extract wheelchair_access before creating washroom
+                wheelchair_access = washroom_data.pop('wheelchair_access', False)
+                
+                # Create Point geometry from coordinates for PostGIS
+                geom_data = washroom_data.pop('geom', {})
+                if 'coordinates' in geom_data and len(geom_data['coordinates']) >= 2:
+                    lon, lat = geom_data['coordinates'][:2]
+                    point = Point(lon, lat)
+                    washroom_data['geom'] = from_shape(point, srid=4326)
+                
+                washroom = Washroom(**washroom_data)
+                db.add(washroom)
+                db.flush()  # Flush to get the washroom ID
+                
+                # Add accessible amenity if wheelchair access is available
+                if wheelchair_access:
+                    washroom.amenities.append(accessible_amenity)
+                
+                inserted_count += 1
+            
+            db.commit()
+            print(f"Successfully inserted {inserted_count} washroom records into database")
+            return True
+            
+        finally:
+            db.close()
+            
+    except Exception as e:
+        print(f"Error loading data to database: {e}")
+        return False
 
 
 if __name__ == "__main__":
-    csv2Dict()
+    """
+    Run this script directly to load data into the database
+    """
+    print("🚀 Loading Vancouver washroom data into database...")
+    success = load_data_to_database()
+    if success:
+        print("✅ Data loading completed successfully!")
+        sys.exit(0)
+    else:
+        print("❌ Data loading failed!")
+        sys.exit(1)
 
 
