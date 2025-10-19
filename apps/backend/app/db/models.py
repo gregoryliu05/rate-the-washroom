@@ -9,8 +9,17 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from geoalchemy2 import Geometry
 import uuid
+from sqlalchemy import Table
 
 Base = declarative_base()
+
+# Association table for many-to-many relationship between Washroom and Amenity
+washroom_amenities = Table(
+    'washroom_amenities',
+    Base.metadata,
+    Column('washroom_id', UUID(as_uuid=True), ForeignKey('washrooms.id'), primary_key=True),
+    Column('amenity_id', Integer, ForeignKey('amenities.id'), primary_key=True)
+)
 
 
 class User(Base):
@@ -60,6 +69,12 @@ class Washroom(Base):
     reviews = relationship("Review", back_populates="washroom", cascade="all, delete-orphan")
     photos = relationship("Photo", back_populates="washroom", cascade="all, delete-orphan")
     reports = relationship("Report", back_populates="washroom", cascade="all, delete-orphan")
+
+    amenities = relationship(
+        "Amenity",
+        secondary="washroom_amenities",
+        back_populates="washrooms"
+    )
 
 
 class Review(Base):
@@ -150,3 +165,17 @@ class Report(Base):
     washroom = relationship("Washroom", back_populates="reports")
     user = relationship("User", back_populates="reports")
     resolver = relationship("User", foreign_keys=[resolved_by])
+
+
+class Amenity(Base):
+    __tablename__ = "amenities"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False)
+
+    # Relationships
+    washrooms = relationship(
+        "Washroom",
+        secondary="washroom_amenities",
+        back_populates="amenities"
+    )
