@@ -36,7 +36,7 @@ class User(Base):
     # Relationships
     reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
     photos = relationship("Photo", back_populates="user", cascade="all, delete-orphan")
-    reports = relationship("Report", back_populates="user", cascade="all, delete-orphan")
+    reports = relationship("Report", back_populates="user", primaryjoin="User.id == Report.user_id", cascade="all, delete-orphan")
 
 
 class Washroom(Base):
@@ -75,7 +75,6 @@ class Washroom(Base):
         secondary="washroom_amenities",
         back_populates="washrooms"
     )
-
 
 class Review(Base):
     __tablename__ = "reviews"
@@ -163,9 +162,8 @@ class Report(Base):
 
     # Relationships
     washroom = relationship("Washroom", back_populates="reports")
-    user = relationship("User", back_populates="reports")
+    user = relationship("User", back_populates="reports", foreign_keys=[user_id])
     resolver = relationship("User", foreign_keys=[resolved_by])
-
 
 class Amenity(Base):
     __tablename__ = "amenities"
