@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from "mapbox-gl"
 import Head from "next/head";
 import Script from "next/script";
-import { MapBounds, Listing } from "./types"
+import { MapBounds, Listing, Coordinates } from "./types"
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 console.log("Mapbox token:", process.env.NEXT_PUBLIC_MAPBOX_TOKEN)
@@ -42,12 +42,20 @@ console.log("Mapbox token:", process.env.NEXT_PUBLIC_MAPBOX_TOKEN)
   }
 ];
 
+const DEFAULT_LOCATION: Coordinates = {lon: -123.246,
+  lat: 49.2606}
+
 export default function MapBoxMap() {
-  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null)
-  const [nearbyListings, setNearbyListings] = useState<Listing[]>([]);
   const mapContainer = useRef<HTMLDivElement | null>(null)
   const map = useRef<mapboxgl.Map | null>(null)
   const markersRef = useRef<Map<string, mapboxgl.Marker>>(new Map())
+
+  const [loading, setLoading] = useState<boolean>(false)
+  const [mapInitialized, setMapInitialized] = useState<boolean>(false)
+
+  const [userLocation, setUserLocation] = useState<Coordinates>(DEFAULT_LOCATION)
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null)
+  const [nearbyListings, setNearbyListings] = useState<Listing[]>([]);
 
   const lng: number = -123.246
   const lat: number = 49.2606
@@ -72,7 +80,9 @@ export default function MapBoxMap() {
   };
 
   useEffect(() => {
-    if (map.current || !mapContainer.current) return;
+    if (map.current || !mapContainer.current) {return};
+
+    setLoading(true)
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v12",
@@ -81,6 +91,21 @@ export default function MapBoxMap() {
       maxZoom: 24,
       minZoom: 11
     })
+
+    const geomControl = new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true
+      },
+      trackUserLocation: true,
+      showUserHeading: true
+    })
+
+    geomControl.on('geolocate', (data) => {
+      console.log('User position', data.coords)
+    })
+
+    map.current.addControl(geomControl)
+
 
     const updateBounds = () => {
       if (map.current) {
@@ -94,7 +119,7 @@ export default function MapBoxMap() {
             max_lon: bounds.getEast()
           }
           setMapBounds(newBounds)
-          console.log("newBounds", newBounds)
+          // console.log("newBounds", newBounds)
           // fetchNearbyListings(newBounds)
           setNearbyListings(mockNearbyListings);
         }
@@ -103,7 +128,11 @@ export default function MapBoxMap() {
 
     map.current.on('zoom', updateBounds)
     map.current.on('moveend', updateBounds)
-    map.current.on('load', updateBounds)
+    map.current.on('load', () => {
+      updateBounds()
+      setLoading(false)
+      setMapInitialized(true)
+    })
   }, [])
 
   useEffect(() => {
@@ -111,32 +140,9 @@ export default function MapBoxMap() {
   setNearbyListings(mockNearbyListings);
 }, [])
 
-// Add a simple test marker after map creation
-useEffect(() => {
-  if (!map.current) return;
-
-  const addTestMarker = () => {
-    console.log("Adding test marker...");
-    try {
-      const marker = new mapboxgl.Marker({ color: 'blue' })
-        .setLngLat([-123.246, 49.2606])
-        .addTo(map.current!);
-      console.log("Test marker added:", marker);
-    } catch (error) {
-      console.error("Error adding marker:", error);
-    }
-  };
-
-  if (map.current.loaded()) {
-    addTestMarker();
-  } else {
-    map.current.on('load', addTestMarker);
-  }
-}, []);
 
   useEffect(() => {
     if (!map.current || nearbyListings.length === 0) return;
-
 
     // Wait for map to be loaded before adding markers
     if (!map.current.loaded()) {
@@ -202,11 +208,26 @@ useEffect(() => {
         strategy="afterInteractive"
         onLoad={() => console.log("Mapbox loaded")}
       />
+    <div style={{ position: "relative", width: "80%", height: "500px" }}>
+      <div ref={mapContainer} style={{ width: "100%", height: "100%" }} />
+      {loading && (
+        <div style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "rgba(255,255,255,0.8)",
+          zIndex: 1000
+        }}>
+          Loading map...
+        </div>
+      )}
+    </div>
 
-  <div
-  ref={mapContainer} style={{ width: "100%", height: "400px" }}>
-
-  </div>
-  </>
-)
+    </>
+  )
 }

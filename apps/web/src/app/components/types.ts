@@ -42,3 +42,9 @@ export interface MapBounds {
   max_lat: number,
   max_lon: number
 }
+
+
+export interface Coordinates{
+  lat: number,
+  lon: number
+}

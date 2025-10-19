@@ -62,9 +62,9 @@ export default function Home() {
         <Navbar />
       </div>
       <div id="map" className="flex-1 flex justify-center items-center p-4">
-        <div className="w-full max-w-4xl">
+        {/* <div className="w-full max-w-4xl"> */}
          <MapBoxMap></MapBoxMap>
-        </div>
+        {/* </div> */}
       </div>
       <div id="list" className="h-80 bg-gray-100 flex justify-center items-center">
         {hardcodelocation && (
