@@ -120,7 +120,7 @@ export default function MapBoxMap() {
           }
           setMapBounds(newBounds)
           // console.log("newBounds", newBounds)
-          // fetchNearbyListings(newBounds)
+          fetchNearbyListings(newBounds)
           setNearbyListings(mockNearbyListings);
         }
       }
