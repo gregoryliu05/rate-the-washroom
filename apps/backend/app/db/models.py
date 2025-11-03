@@ -11,6 +11,7 @@ from geoalchemy2 import Geometry
 import uuid
 from sqlalchemy import Table
 
+
 Base = declarative_base()
 
 # Association table for many-to-many relationship between Washroom and Amenity
@@ -25,7 +26,7 @@ washroom_amenities = Table(
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String, primary_key=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
     first_name = Column(String(50), nullable=False)
@@ -61,7 +62,7 @@ class Washroom(Base):
     floor = Column(Integer, nullable=True)
 
     # Metadata
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    created_by = Column(String, ForeignKey("users.id"), nullable=True)
 
 
     # Relationships

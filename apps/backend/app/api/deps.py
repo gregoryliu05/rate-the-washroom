@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from typing import AsyncGenerator
 from firebase_admin import auth
+from app.core.security import get_firebase_app
 
 security = HTTPBearer(auto_error =False)
 
@@ -15,7 +16,10 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 
 # TODO: auth dependency
 
+
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    get_firebase_app()
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(status_code= status.HTTP_401_UNAUTHORIZED, detail = "missing bearer")
 

@@ -4,7 +4,7 @@ from uuid import UUID
 from typing import Optional
 
 class UserCreate(BaseModel):
-    username: UUID
+    username: str
     email: str
     first_name: str
     last_name: str
@@ -15,7 +15,7 @@ class UserCreate(BaseModel):
 
 
 class UserOut(BaseModel):
-    id: UUID
+    id: str
     username: str
     email: str
     first_name: str
@@ -40,7 +40,7 @@ class WashroomOut(BaseModel):
     wheelchair_access: bool  # Or Optional[dict] if nullable
     overall_rating: float
     rating_count: int
-    created_by: UUID 
+    created_by: UUID
 
     class Config:
         from_attributes = True
@@ -52,7 +52,7 @@ class WashroomCreate(BaseModel):
     address: str
     city: str
     country: str
-    geom: str  
+    geom: str
     opening_hours: Optional[dict]
     wheelchair_access: bool  # Or Optional[dict] if nullable
     lat: float
@@ -86,7 +86,7 @@ class ReviewOutByWashroom(BaseModel):
 
 # return all but user_id since already known
 class ReviewOutByUser(BaseModel):
-    id: UUID
+    id: str
     washroom_id: UUID
     rating: int
     title: str
