@@ -62,7 +62,7 @@ async def create_user(user_in: schemas.UserCreate,
         # make updates here
         updates = user_in.model_dump(exclude_unset=True)
         for key, value in updates.items():
-            setattr(existing, key ,value)
+            setattr(existing, key,value)
         await db.commit()
         await db.refresh(existing)
         return existing
