@@ -1,6 +1,6 @@
 'use client'
 
-import {createContext, useContext, useEffect, useState, ReactNode} from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import {
     User,
     signInWithEmailAndPassword,
@@ -11,7 +11,6 @@ import {
     signInWithPopup
 } from 'firebase/auth'
 import { auth } from './firebase'
-import firebase from 'firebase/app'
 
 interface AuthContextValue {
     user: User | null;
@@ -26,15 +25,15 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider( {children}: {children: ReactNode}) {
-    const [user, setUser] = useState<User | null>(null)
-    const [loading, setLoading] = useState(true)
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             setUser(firebaseUser);
-            setLoading(false)
+            setLoading(false);
             if (firebaseUser) {
-                await syncUserWithBackend(firebaseUser)
+                await syncUserWithBackend(firebaseUser);
             }
         })
 
@@ -48,10 +47,10 @@ export function AuthProvider( {children}: {children: ReactNode}) {
                 method: "POST",
                 headers:  {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token},`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                     username: firebaseUser.displayName,
+                    username: firebaseUser.displayName,
                     email: firebaseUser.email,
                     first_name: 'User',
                     last_name: "Name",
@@ -87,7 +86,6 @@ export function AuthProvider( {children}: {children: ReactNode}) {
 
 
     return (
-        // TODO
         <AuthContext.Provider value = {{user, loading, signIn, signUp, signInWithGoogle, signOut, getToken}}>
             {!loading && children}
         </AuthContext.Provider>
