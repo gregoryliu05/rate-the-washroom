@@ -16,9 +16,10 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 
 # TODO: auth dependency
 
-app = get_firebase_app()
+
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    get_firebase_app()
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(status_code= status.HTTP_401_UNAUTHORIZED, detail = "missing bearer")
 

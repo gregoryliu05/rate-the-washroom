@@ -73,7 +73,7 @@ class WashroomCreate(BaseModel):
 # return all but washroom_id since already known
 class ReviewOutByWashroom(BaseModel):
     id: UUID
-    user_id: str
+    user_id: UUID
     rating: int
     title: str
     description: str
@@ -101,7 +101,7 @@ class ReviewOutByUser(BaseModel):
 # creating requires all attributes
 class ReviewCreate(BaseModel):
     washroom_id: UUID
-    user_id: str
+    user_id: UUID
     rating: int
     title: Optional[str] = None
     description: Optional[str] = None
