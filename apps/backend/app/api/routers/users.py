@@ -55,8 +55,8 @@ async def delete_user(user_id: str, db: AsyncSession = Depends(deps.get_db_sessi
 async def create_user(user_in: schemas.UserCreate,
                       db: AsyncSession = Depends(deps.get_db_session),
                       current_user: dict = Depends(deps.get_current_user)):
-    id = current_user["id"]
-    result = await db.execute(select(models.User).where(models.User.id == id))
+    user_id = current_user["id"]
+    result = await db.execute(select(models.User).where(models.User.id == user_id))
     existing = result.scalar_one_or_none()
     if existing:
         # make updates here
@@ -68,7 +68,7 @@ async def create_user(user_in: schemas.UserCreate,
         return existing
 
     new_user = models.User(
-        id = id,
+        id = user_id,
         email = user_in.email,
         first_name = user_in.first_name,
         last_name = user_in.last_name,
