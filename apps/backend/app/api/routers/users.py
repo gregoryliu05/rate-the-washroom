@@ -19,26 +19,23 @@ router = APIRouter(
 
 
 @router.get("/", response_model=List[schemas.UserOut])
-async def list_users(db: AsyncSession = Depends(deps.get_db)):
+async def list_users(db: AsyncSession = Depends(deps.get_db_session)):
     result = await db.execute(select(models.User))
     return result.scalars().all()
 
 
-@router.get("/{user_id}", response_model=schemas.UserOut)
-async def get_user(user_id: str, db: AsyncSession = Depends(deps.get_db)):
-    try:
-        user_id = UUID(user_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid user ID format")
-
-    result = await db.execute(select(models.User).where(models.User.id == user_id))
+@router.get("/me", response_model=schemas.UserOut)
+async def get_user(db: AsyncSession = Depends(deps.get_db_session),
+                   current_user: dict = Depends(deps.get_current_user)
+                   ):
+    result = await db.execute(select(models.User).where(models.User.id == current_user))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
 @router.delete("/{user_id}", status_code=204)
-async def delete_user(user_id: str, db: AsyncSession = Depends(deps.get_db)):
+async def delete_user(user_id: str, db: AsyncSession = Depends(deps.get_db_session)):
     try:
         user_id = UUID(user_id)
     except ValueError:
@@ -54,9 +51,23 @@ async def delete_user(user_id: str, db: AsyncSession = Depends(deps.get_db)):
     return
 
 # fe: usercreate -> be -> be: userOut -> db
-@router.post("/", response_model = schemas.UserOut, status_code = status.HTTP_201_CREATED)
-async def create_user(user_in: schemas.UserCreate, db: AsyncSession = Depends(deps.get_db)):
+@router.post("/sync", response_model = schemas.UserOut, status_code = status.HTTP_201_CREATED)
+async def create_user(user_in: schemas.UserCreate,
+                      db: AsyncSession = Depends(deps.get_db_session),
+                      current_user: dict = Depends(deps.get_current_user)):
+    id = current_user["id"]
+    existing = db.query(models.User).filter(models.User.id == id).first()
+    if existing:
+        # make updates here
+        updates = user_in.model_dump(exclude_unset=True)
+        for key, value in updates:
+            setattr(existing, key ,value)
+        await db.commit()
+        await db.refresh(existing)
+        return existing
+
     new_user = models.User(
+        id = id,
         email = user_in.email,
         first_name = user_in.first_name,
         last_name = user_in.last_name,
@@ -71,7 +82,7 @@ async def create_user(user_in: schemas.UserCreate, db: AsyncSession = Depends(de
 
 
 @router.patch("/{user_id}", status_code = 204)
-async def patch_user(user_id: str, data: UserUpdate, db: AsyncSession = Depends(deps.get_db)):
+async def patch_user(user_id: str, data: UserUpdate, db: AsyncSession = Depends(deps.get_db_session)):
     try:
         user_uuid = UUID(user_id)
     except ValueError:

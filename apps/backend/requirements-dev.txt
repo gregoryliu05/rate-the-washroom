@@ -20,3 +20,5 @@ jupyter>=1.0.0
 
 # Data tools
 pandas>=2.0.0
+shapely>=2.0.0
+firebase-admin>=6.0.0
