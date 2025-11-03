@@ -28,7 +28,7 @@ async def list_users(db: AsyncSession = Depends(deps.get_db_session)):
 async def get_user(db: AsyncSession = Depends(deps.get_db_session),
                    current_user: dict = Depends(deps.get_current_user)
                    ):
-    result = await db.execute(select(models.User).where(models.User.id == current_user))
+    result = await db.execute(select(models.User).where(models.User.id == current_user["id"]))
     user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -56,11 +56,12 @@ async def create_user(user_in: schemas.UserCreate,
                       db: AsyncSession = Depends(deps.get_db_session),
                       current_user: dict = Depends(deps.get_current_user)):
     id = current_user["id"]
-    existing = db.query(models.User).filter(models.User.id == id).first()
+    result = await db.execute(select(models.User).where(models.User.id == id))
+    existing = result.scalar_one_or_none()
     if existing:
         # make updates here
         updates = user_in.model_dump(exclude_unset=True)
-        for key, value in updates:
+        for key, value in updates.items():
             setattr(existing, key ,value)
         await db.commit()
         await db.refresh(existing)

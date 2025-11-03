@@ -26,7 +26,7 @@ washroom_amenities = Table(
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(String, primary_key=True, default=uuid.uuid4)
+    id = Column(String, primary_key=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
     first_name = Column(String(50), nullable=False)
@@ -62,7 +62,7 @@ class Washroom(Base):
     floor = Column(Integer, nullable=True)
 
     # Metadata
-    created_by = Column(str, ForeignKey("users.id"), nullable=True)
+    created_by = Column(String, ForeignKey("users.id"), nullable=True)
 
 
     # Relationships

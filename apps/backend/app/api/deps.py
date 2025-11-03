@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from typing import AsyncGenerator
 from firebase_admin import auth
-from core.security import get_firebase_app
+from app.core.security import get_firebase_app
 
 security = HTTPBearer(auto_error =False)
 
