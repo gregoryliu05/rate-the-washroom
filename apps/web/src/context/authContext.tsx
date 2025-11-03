@@ -43,7 +43,7 @@ export function AuthProvider( {children}: {children: ReactNode}) {
     const syncUserWithBackend = async (firebaseUser: User) => {
         try {
             const token = await firebaseUser.getIdToken()
-            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/sync`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/sync`, {
                 method: "POST",
                 headers:  {
                     'Content-Type': 'application/json',
@@ -58,6 +58,14 @@ export function AuthProvider( {children}: {children: ReactNode}) {
                 })
             })
 
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Backend sync failed: ${response.status} - ${JSON.stringify(errorData)}`);
+        }
+
+        const data = await response.json();
+        console.log('User synced successfully:', data);
+        return data;
         } catch (err) {
             console.error('Backend Sync Failed:', err)
         }
@@ -87,7 +95,7 @@ export function AuthProvider( {children}: {children: ReactNode}) {
 
     return (
         <AuthContext.Provider value = {{user, loading, signIn, signUp, signInWithGoogle, signOut, getToken}}>
-            {!loading && children}
+          {loading ? <div>Loading...</div> : children}
         </AuthContext.Provider>
     )
 }
