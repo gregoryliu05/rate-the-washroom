@@ -82,7 +82,7 @@ class Review(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     washroom_id = Column(UUID(as_uuid=True), ForeignKey("washrooms.id"), nullable=False)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
 
     # Rating (1-5 stars)
     rating = Column(Integer, nullable=False)  # 1-5
@@ -112,7 +112,7 @@ class Photo(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     washroom_id = Column(UUID(as_uuid=True), ForeignKey("washrooms.id"), nullable=False)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
 
     # Photo metadata
     filename = Column(String(255), nullable=False)
@@ -141,7 +141,7 @@ class Report(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     washroom_id = Column(UUID(as_uuid=True), ForeignKey("washrooms.id"), nullable=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
 
     # Report details
     report_type = Column(String(50), nullable=False)  # closed, incorrect_info, unsafe, etc.
@@ -154,7 +154,7 @@ class Report(Base):
 
     # Admin fields
     admin_notes = Column(Text, nullable=True)
-    resolved_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    resolved_by = Column(String, ForeignKey("users.id"), nullable=True)
     resolved_at = Column(DateTime, nullable=True)
 
     # Metadata
