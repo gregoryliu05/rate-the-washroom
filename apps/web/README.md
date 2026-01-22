@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rate The Washroom
+
+Welcome to **Rate The Washroom**, an innovative platform that allows users to review and rate washrooms. This repository is a collaborative project leveraging multiple modern technologies to deliver an intuitive user interface and robust backend.
+
+## Description
+Rate The Washroom aims to improve public hygiene and transparency by allowing users to provide feedback on washrooms. The feedback can help establishments identify areas for improvement and maintain cleanliness standards.
+
+## Features
+- User-friendly interface to rate washrooms on various parameters.
+- Database integration to collect and analyze user feedback.
+- Responsive design ensuring accessibility across devices.
+- Multi-language support using TypeScript (frontend) and Python (backend).
+
+## Technologies Used
+This project is built on modern technologies with the following language composition:
+
+- **TypeScript (47.7%)**: Drives the frontend and ensures type safety and scalability.
+- **Python (42.6%)**: Powers the backend logic and data processing.
+- **Docker (3.6%)**: Ensures seamless containerization and deployment.
+- **Shell & Batch Scripting (5%)**: Used for dev-ops scripts and automation.
+- **JavaScript/CSS (1.1%)**: Additional frontend styling support.
 
 ## Getting Started
 
-First, run the development server:
+Follow these instructions to set up the project locally and get started:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```sh
+npm install # Install dependencies
+npm run dev # Start development server on localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Navigate to [http://localhost:3000](http://localhost:3000) to explore the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The project can be deployed using Docker as well as on Next.js supported cloud environments such as Vercel. For deployment guidance, refer to [Dockerfile](../Dockerfile) and [Vercel Documentation](https://vercel.com/docs).
 
-## Learn More
+## License
 
-To learn more about Next.js, take a look at the following resources:
+Rate The Washroom is licensed under MIT. Contributions and feedback are welcome to ensure the project's continuous improvement.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
