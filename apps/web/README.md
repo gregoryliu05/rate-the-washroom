@@ -1,24 +1,18 @@
 # Rate The Washroom
 
-Welcome to **Rate The Washroom**, an innovative platform that allows users to review and rate washrooms. This repository is a collaborative project leveraging multiple modern technologies to deliver an intuitive user interface and robust backend.
+Welcome to **Rate The Washroom**, an innovative platform that allows users to find clean, review, and rate public washrooms. This repository is a collaborative project for SFU StormHacks 2025 leveraging multiple modern technologies to deliver an intuitive user interface and robust backend.
 
 ## Description
-Rate The Washroom aims to improve public hygiene and transparency by allowing users to provide feedback on washrooms. The feedback can help establishments identify areas for improvement and maintain cleanliness standards.
+Rate the Washroom was built to solve a problem many people quietly struggle with: the fear and anxiety around using public washrooms. Furthermore, to allow disabled and handicapped users to know where accessible washrooms are available. For individuals with bathroom-related anxiety or phobias, uncertainty about cleanliness, privacy, or safety can turn a basic human need into a source of stress and avoidance.
+
+By crowdsourcing real user reviews and cleanliness ratings, Rate the Washroom helps remove that uncertainty. Our goal was simple, make public washrooms more predictable, more accessible, and less intimidating. When people know where clean, reliable washrooms are, they can plan with confidence, reduce anxiety, and reclaim a basic necessity that everyone deserves access to.
 
 ## Features
 - User-friendly interface to rate washrooms on various parameters.
 - Database integration to collect and analyze user feedback.
 - Responsive design ensuring accessibility across devices.
-- Multi-language support using TypeScript (frontend) and Python (backend).
+- Multi-language support using React (frontend) and Python (backend).
 
-## Technologies Used
-This project is built on modern technologies with the following language composition:
-
-- **TypeScript (47.7%)**: Drives the frontend and ensures type safety and scalability.
-- **Python (42.6%)**: Powers the backend logic and data processing.
-- **Docker (3.6%)**: Ensures seamless containerization and deployment.
-- **Shell & Batch Scripting (5%)**: Used for dev-ops scripts and automation.
-- **JavaScript/CSS (1.1%)**: Additional frontend styling support.
 
 ## Getting Started
 
