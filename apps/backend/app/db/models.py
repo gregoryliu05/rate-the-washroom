@@ -27,6 +27,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(String, primary_key=True)
+    public_id = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
     email = Column(String(255), unique=True, nullable=False, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
     first_name = Column(String(50), nullable=False)
@@ -56,17 +57,21 @@ class Washroom(Base):
     long = Column(Float, nullable=False)
     # Washroom details
     opening_hours = Column(JSONB, nullable=True)
+    wheelchair_access = Column(Boolean, default=False, nullable=False)
 
     overall_rating = Column(Float, default=0.0)
     rating_count = Column(Integer, default=0)
     floor = Column(Integer, nullable=True)
 
     # Metadata
-    created_by = Column(String, ForeignKey("users.id"), nullable=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("users.public_id"), nullable=True)
 
 
     # Relationships
-    creator = relationship("User")
+    creator = relationship(
+        "User",
+        primaryjoin="Washroom.created_by == User.public_id"
+    )
     reviews = relationship("Review", back_populates="washroom", cascade="all, delete-orphan")
     photos = relationship("Photo", back_populates="washroom", cascade="all, delete-orphan")
     reports = relationship("Report", back_populates="washroom", cascade="all, delete-orphan")

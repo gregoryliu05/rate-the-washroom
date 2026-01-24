@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.settings import settings
 from app.core.security import *
 from app.api.routers import washrooms, users, reviews
+
 # Create FastAPI app
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -13,14 +14,21 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-app.include_router(washrooms.router)
-app.include_router(users.router)
-app.include_router(reviews.router)
+# Include routers with API v1 prefix
+app.include_router(washrooms.router, prefix=settings.API_V1_STR)
+app.include_router(users.router, prefix=settings.API_V1_STR)
+app.include_router(reviews.router, prefix=settings.API_V1_STR)
 
 # CORS middleware
+cors_origin_regex = None
+if settings.ENVIRONMENT.lower() in {"development", "dev", "local"}:
+    # Allow any localhost port for local dev (Next.js often uses 3000/3001).
+    cors_origin_regex = r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origin_regex=cors_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
