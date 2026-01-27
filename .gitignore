@@ -248,7 +248,7 @@ cython_debug/
 .vscode/
 
 # Docker
-.dockerignore
+
 
 # Database
 *.db

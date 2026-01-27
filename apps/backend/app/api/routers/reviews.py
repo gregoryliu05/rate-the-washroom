@@ -1,107 +1,143 @@
-from fastapi import APIRouter, Depends, Query, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
-from typing import List, Optional
-from pydantic import BaseModel
-from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy.orm import Session
+from sqlalchemy import select, and_, func
+from typing import List
 
-from app.db import models, session, schemas
+from app.db import models, schemas
 from app.api import deps
 from uuid import UUID, uuid4
 
 
-router = APIRouter(prefix="/review", tags=["reviews"])
+router = APIRouter(prefix="/reviews", tags=["reviews"])
+
+def _recompute_washroom_rating(db: Session, washroom_id: UUID) -> None:
+    washroom = db.execute(
+        select(models.Washroom).where(models.Washroom.id == washroom_id)
+    ).scalar_one_or_none()
+    if not washroom:
+        return
+
+    count, avg = db.execute(
+        select(func.count(models.Review.id), func.avg(models.Review.rating)).where(
+            models.Review.washroom_id == washroom_id
+        )
+    ).one()
+
+    washroom.rating_count = int(count or 0)
+    washroom.overall_rating = float(avg) if avg is not None else 0.0
 
 
 # GET by users
 @router.get("/{user_id}", response_model=List[schemas.ReviewOutByUser])
-async def get_review_by_user(user_id: str, db: AsyncSession = Depends(deps.get_db)):
-    try:
-        user_id = UUID(user_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid user ID format")
+def get_review_by_user(
+    user_id: str,
+    db: Session = Depends(deps.get_db),
+    current_user: dict = Depends(deps.get_current_user),
+):
+    if user_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
-    result = await db.execute(
-        select(models.Review).where(models.Review.user_id == user_id)
+    result = db.execute(
+        select(models.Review)
+        .where(models.Review.user_id == user_id)
+        .order_by(models.Review.created_at.desc())
         )
     reviews = result.scalars().all()
 
-    if not reviews:
-        raise HTTPException(status_code = 404, detail = "No reviews for given User ID")
     return reviews
 
 
 # GET by washrrom
 @router.get("/washroom/{washroom_id}", response_model=List[schemas.ReviewOutByWashroom])
-async def get_review_by_washroom(washroom_id: str, db: AsyncSession = Depends(deps.get_db)):
+def get_review_by_washroom(washroom_id: str, db: Session = Depends(deps.get_db)):
     try:
         washroom_id = UUID(washroom_id)
     except ValueError:
         raise HTTPException(status_code = 400, detail = "Invalid Washroom ID format")
 
-    result = await db.execute(
-        select(models.Review).where(models.Review.washroom_id == washroom_id)
+    result = db.execute(
+        select(models.Review)
+        .where(models.Review.washroom_id == washroom_id)
+        .order_by(models.Review.created_at.desc())
     )
     reviews = result.scalars().all()
 
-    if not reviews:
-        raise HTTPException(status_code = 404, detail = "No reviews for given Washroom ID")
     return reviews
 
 
 
 # POST review
 @router.post("/", response_model=schemas.ReviewOutByWashroom, status_code=status.HTTP_201_CREATED)
-async def create_Review(review_in: schemas.ReviewCreate, db: AsyncSession = Depends(deps.get_db)):
+def create_Review(
+    review_in: schemas.ReviewCreate,
+    response: Response,
+    db: Session = Depends(deps.get_db),
+    current_user: dict = Depends(deps.get_current_user),
+):
+    user_id = current_user["id"]
 
     # check first for existing review for washroom by user
-    try:
-        washroom_id = UUID(review_in.washroom_id)
-        user_id = UUID(review_in.user_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid Washroom ID or User ID format")
+    washroom_id = review_in.washroom_id
 
-    duplicate_check = await db.execute(
+    washroom = db.execute(
+        select(models.Washroom).where(models.Washroom.id == washroom_id)
+    ).scalar_one_or_none()
+    if not washroom:
+        raise HTTPException(status_code=404, detail="Washroom not found")
+
+    existing_reviews = db.execute(
         select(models.Review)
         .where(
             and_(
                 models.Review.user_id == user_id,
                 models.Review.washroom_id == washroom_id
             )
+        ).order_by(models.Review.updated_at.desc())
+    ).scalars().all()
+
+    # Upsert behavior: if a review already exists for (washroom_id, user_id),
+    # update it instead of creating a duplicate.
+    if existing_reviews:
+        review = existing_reviews[0]
+        review.rating = review_in.rating
+        review.title = review_in.title
+        review.description = review_in.description
+
+        # If duplicates somehow exist, keep the newest and delete the rest.
+        for dup in existing_reviews[1:]:
+            db.delete(dup)
+
+        response.status_code = status.HTTP_200_OK
+    else:
+        review = models.Review(
+            washroom_id=washroom_id,
+            user_id=user_id,
+            rating=review_in.rating,
+            title=review_in.title,
+            description=review_in.description,
+            likes=0,
         )
-    )
-    duplicate_results = duplicate_check.scalars().all()
+        db.add(review)
+        response.status_code = status.HTTP_201_CREATED
 
-    if duplicate_results:
-        raise HTTPException(status_code=400, detail="User already has review for Washroom")
-
-    # Create new review
-    new_review = models.Review(
-        washroom_id=washroom_id,
-        user_id=user_id,
-        rating=review_in.rating,
-        title=review_in.title,
-        description=review_in.description,
-        likes=0
-    )
-
-    db.add(new_review)
-    await db.commit()
-    await db.refresh(new_review)
-
-    return new_review
+    db.flush()
+    _recompute_washroom_rating(db, washroom_id)
+    db.commit()
+    db.refresh(review)
+    return review
 
 # PATCH review
 @router.patch("/{review_id}", status_code=status.HTTP_200_OK )
-async def update_review(review_id: str,review_update: schemas.ReviewEdit,
-    db: AsyncSession = Depends(deps.get_db)
+def update_review(review_id: str,review_update: schemas.ReviewEdit,
+    db: Session = Depends(deps.get_db),
+    current_user: dict = Depends(deps.get_current_user),
     ):
     try:
         review_id = UUID(review_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid review ID format")
 
-    result = await db.execute(
+    result = db.execute(
         select(models.Review).where(models.Review.id == review_id)
      )
 
@@ -109,6 +145,9 @@ async def update_review(review_id: str,review_update: schemas.ReviewEdit,
 
     if not review:
         raise HTTPException(status_code=404, detail="Review not found")
+
+    if review.user_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     # check for updated fields from input
     if review_update.rating is not None:
@@ -118,15 +157,19 @@ async def update_review(review_id: str,review_update: schemas.ReviewEdit,
     if review_update.description is not None:
         review.description = review_update.description
 
-    await db.commit()
-    await db.refresh(review)
+    washroom_id = review.washroom_id
+    db.flush()
+    _recompute_washroom_rating(db, washroom_id)
+    db.commit()
+    db.refresh(review)
 
     return review
 # DELETE review
 @router.delete("/{review_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_review(
+def delete_review(
     review_id: str,
-    db: AsyncSession = Depends(deps.get_db)
+    db: Session = Depends(deps.get_db),
+    current_user: dict = Depends(deps.get_current_user),
 ):
     """Delete a review"""
     try:
@@ -135,7 +178,7 @@ async def delete_review(
         raise HTTPException(status_code=400, detail="Invalid review ID format")
 
     # Find the review
-    result = await db.execute(
+    result = db.execute(
         select(models.Review).where(models.Review.id == review_id)
     )
     review = result.scalar_one_or_none()
@@ -143,7 +186,12 @@ async def delete_review(
     if not review:
         raise HTTPException(status_code=404, detail="Review not found")
 
-    # Delete the review
-    await db.delete(review)
-    await db.commit()
+    if review.user_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
+    # Delete the review
+    washroom_id = review.washroom_id
+    db.delete(review)
+    db.flush()
+    _recompute_washroom_rating(db, washroom_id)
+    db.commit()

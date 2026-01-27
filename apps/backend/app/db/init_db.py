@@ -21,7 +21,7 @@ def init_database():
         print("🚀 Starting database initialization...")
 
         # Create engine
-        engine = create_engine(settings.DATABASE_URL, echo=True)
+        engine = create_engine(settings.DATABASE_URL, echo=settings.DEBUG)
 
         # Enable PostGIS extension
         print("📦 Enabling PostGIS extension...")
@@ -68,6 +68,39 @@ def init_database():
 
             connection.commit()
             print("✅ All indexes processed")
+
+        # Recompute denormalized aggregates on washrooms from reviews
+        print("🧮 Recomputing washroom review aggregates...")
+        with engine.connect() as connection:
+            connection.execute(
+                text(
+                    """
+                    UPDATE washrooms w
+                    SET rating_count = r.cnt,
+                        overall_rating = r.avg_rating
+                    FROM (
+                        SELECT washroom_id,
+                               COUNT(*)::int AS cnt,
+                               COALESCE(AVG(rating), 0)::double precision AS avg_rating
+                        FROM reviews
+                        GROUP BY washroom_id
+                    ) r
+                    WHERE w.id = r.washroom_id;
+                    """
+                )
+            )
+            connection.execute(
+                text(
+                    """
+                    UPDATE washrooms
+                    SET rating_count = 0,
+                        overall_rating = 0
+                    WHERE id NOT IN (SELECT DISTINCT washroom_id FROM reviews);
+                    """
+                )
+            )
+            connection.commit()
+            print("✅ Washroom aggregates updated")
 
         # Verify tables were created
         with engine.connect() as connection:

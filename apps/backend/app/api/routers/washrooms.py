@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from sqlalchemy import select, text
 from typing import List, Optional
 import uuid
@@ -16,6 +16,15 @@ router = APIRouter(
     tags = ["washrooms"]
 )
 
+def _geom_to_geojson(geom_value):
+    if geom_value is None:
+        return None
+    try:
+        geom_obj = to_shape(geom_value)
+        return {"type": "Point", "coordinates": [geom_obj.x, geom_obj.y]}
+    except Exception:
+        return None
+
 
 @router.get("/", response_model=List[schemas.WashroomOut])
 def get_washrooms_in_bounds(
@@ -23,11 +32,11 @@ def get_washrooms_in_bounds(
     min_lon: float = Query(None, ge = -180, le = 180),
     max_lat: float = Query(None, ge = -90, le = 90),
     max_lon: float = Query(None, ge= -180, le = 180),
-    db: AsyncSession = Depends(deps.get_db)
+    db: Session = Depends(deps.get_db)
 ):
 
     query = ""
-    if all([min_lat, min_lon, max_lat, max_lon]):
+    if all(v is not None for v in [min_lat, min_lon, max_lat, max_lon]):
         query = text("""
             SELECT *
             FROM washrooms
@@ -51,48 +60,89 @@ def get_washrooms_in_bounds(
     })
 
     washrooms = result.fetchall()
-    # Convert geom to GeoJSON for each washroom
-    return [
-        schemas.WashroomOut(
-            id=str(w.id),
-            name=w.name,
-            description=w.description,
-            address=w.address,
-            city=w.city,
-            country=w.country,
-            geom={
-                "type": "Point",
-                "coordinates": [to_shape(w.geom).x, to_shape(w.geom).y]
-            },
-            lat=w.lat,
-            long=w.long,
-            opening_hours=w.opening_hours,
-            overall_rating=w.overall_rating,
-            rating_count=w.rating_count,
-            created_by=str(w.created_by)
+    # Convert geom to GeoJSON for each washroom (handle WKB/WKT or raw values)
+    response = []
+    for w in washrooms:
+        geom_geojson = _geom_to_geojson(w.geom)
+
+        response.append(
+            schemas.WashroomOut(
+                id=str(w.id),
+                name=w.name,
+                description=w.description,
+                address=w.address,
+                city=w.city,
+                country=w.country,
+                geom=geom_geojson,
+                lat=w.lat,
+                long=w.long,
+                opening_hours=w.opening_hours,
+                wheelchair_access=w.wheelchair_access,
+                overall_rating=w.overall_rating,
+                rating_count=w.rating_count,
+                created_by=str(w.created_by)
+            )
         )
-        for w in washrooms
-    ]
+
+    return response
+
+
+@router.get("/me", response_model=List[schemas.WashroomOut])
+def get_my_washrooms(
+    db: Session = Depends(deps.get_db),
+    current_user: dict = Depends(deps.get_current_user),
+):
+    user_result = db.execute(
+        select(models.User).where(models.User.id == current_user["id"])
+    )
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    result = db.execute(
+        select(models.Washroom).where(models.Washroom.created_by == user.public_id)
+    )
+    washrooms = result.scalars().all()
+
+    response = []
+    for w in washrooms:
+        geom_geojson = _geom_to_geojson(w.geom)
+        response.append(
+            schemas.WashroomOut(
+                id=str(w.id),
+                name=w.name,
+                description=w.description,
+                address=w.address,
+                city=w.city,
+                country=w.country,
+                geom=geom_geojson,
+                lat=w.lat,
+                long=w.long,
+                opening_hours=w.opening_hours,
+                wheelchair_access=w.wheelchair_access,
+                overall_rating=w.overall_rating,
+                rating_count=w.rating_count,
+                created_by=str(w.created_by),
+            )
+        )
+
+    return response
 
 
 @router.get("/{washroom_id}", response_model = schemas.WashroomOut)
-async def get_washroom(washroom_id: str, db: AsyncSession = Depends(deps.get_db)):
+def get_washroom(washroom_id: str, db: Session = Depends(deps.get_db)):
     try:
         washroom_id = uuid.UUID(washroom_id)
     except ValueError:
         raise HTTPException(status_code = 400, detail = "washroom ID must be uuid")
 
-    res = await db.execute(select(models.Washroom).where(models.Washroom.id == washroom_id))
+    res = db.execute(select(models.Washroom).where(models.Washroom.id == washroom_id))
     washroom = res.scalar_one_or_none()
     if not washroom:
         raise HTTPException(status_code = 404, detail = "washroom not found")
 
     # Convert geom to GeoJSON
-    geom_obj = to_shape(washroom.geom)
-    geom_geojson = {
-        "type": "Point",
-        "coordinates": [geom_obj.x, geom_obj.y]
-    }
+    geom_geojson = _geom_to_geojson(washroom.geom)
 
     return schemas.WashroomOut(
         id=str(washroom.id),
@@ -113,7 +163,18 @@ async def get_washroom(washroom_id: str, db: AsyncSession = Depends(deps.get_db)
 
 
 @router.post("/", response_model=schemas.WashroomOut, status_code=status.HTTP_201_CREATED)
-async def create_washroom(washroom_in: schemas.WashroomCreate, db: AsyncSession = Depends(deps.get_db)):
+def create_washroom(
+    washroom_in: schemas.WashroomCreate,
+    db: Session = Depends(deps.get_db),
+    current_user: dict = Depends(deps.get_current_user)
+):
+    user_result = db.execute(
+        select(models.User).where(models.User.id == current_user["id"])
+    )
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     # Convert GeoJSON dict to WKT string if needed
     if isinstance(washroom_in.geom, dict):
         coords = washroom_in.geom["coordinates"]
@@ -132,15 +193,30 @@ async def create_washroom(washroom_in: schemas.WashroomCreate, db: AsyncSession 
         lat = washroom_in.lat,
         long = washroom_in.long,
         opening_hours=washroom_in.opening_hours,
-        overall_rating=washroom_in.overall_rating,
-        rating_count=washroom_in.rating_count,
-        created_by=washroom_in.created_by
+        wheelchair_access=washroom_in.wheelchair_access,
+        # These are derived from reviews; never trust client-provided values.
+        overall_rating=0.0,
+        rating_count=0,
+        created_by=user.public_id
     )
-    await db.add(new_washroom)
-    await db.commit()
-    await db.refresh(new_washroom)
-    return new_washroom
+    db.add(new_washroom)
+    db.commit()
+    db.refresh(new_washroom)
 
-
-
-
+    geom_geojson = _geom_to_geojson(new_washroom.geom)
+    return schemas.WashroomOut(
+        id=str(new_washroom.id),
+        name=new_washroom.name,
+        description=new_washroom.description,
+        address=new_washroom.address,
+        city=new_washroom.city,
+        country=new_washroom.country,
+        geom=geom_geojson,
+        lat=new_washroom.lat,
+        long=new_washroom.long,
+        opening_hours=new_washroom.opening_hours,
+        wheelchair_access=new_washroom.wheelchair_access,
+        overall_rating=new_washroom.overall_rating,
+        rating_count=new_washroom.rating_count,
+        created_by=str(new_washroom.created_by),
+    )

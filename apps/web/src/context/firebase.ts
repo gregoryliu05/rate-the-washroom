@@ -11,7 +11,7 @@ const firebaseConfig = {
 };
 
 const missingKeys = Object.entries(firebaseConfig)
-    .filter(([key, value]) => !value)
+    .filter(([, value]) => !value)
     .map(([key]) => key);
 if (missingKeys.length > 0) {
     throw new Error(

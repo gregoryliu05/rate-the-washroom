@@ -6,12 +6,14 @@ const nextConfig: NextConfig = {
   
   // Optimize for production
   compress: true,
-  
-  // Enable experimental features
-  experimental: {
-    // Enable server components
-    serverComponentsExternalPackages: [],
+
+  // Avoid Turbopack picking the wrong monorepo root when multiple lockfiles exist.
+  turbopack: {
+    root: process.cwd(),
   },
+  
+  // External packages for server components
+  serverExternalPackages: [],
   
   // Environment variables
   env: {

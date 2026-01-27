@@ -29,32 +29,55 @@ export function AuthProvider( {children}: {children: ReactNode}) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        let alive = true;
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (!alive) return;
+            setLoading(true);
             setUser(firebaseUser);
-            setLoading(false);
             if (firebaseUser) {
                 await syncUserWithBackend(firebaseUser);
             }
-        })
+            if (alive) setLoading(false);
+        });
 
-        return () => unsubscribe();
+        return () => {
+            alive = false;
+            unsubscribe();
+        };
     }, [])
 
     const syncUserWithBackend = async (firebaseUser: User) => {
         try {
             const token = await firebaseUser.getIdToken()
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/sync`, {
+            const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+            const normalizedApiBase = apiBaseUrl.replace(/\/+$/, "");
+            const apiV1Base = normalizedApiBase.endsWith("/api/v1")
+              ? normalizedApiBase
+              : `${normalizedApiBase}/api/v1`;
+
+            const email = firebaseUser.email || `${firebaseUser.uid}@users.local`;
+            const usernameBase =
+                firebaseUser.displayName ||
+                (email.includes("@") ? email.split("@")[0] : email) ||
+                "user";
+            const safeBase = usernameBase
+                .toLowerCase()
+                .replace(/[^a-z0-9_]+/g, "_")
+                .replace(/^_+|_+$/g, "")
+                .slice(0, 36) || "user";
+            const username = `${safeBase}_${firebaseUser.uid.slice(0, 8)}`.slice(0, 50);
+
+            const response = await fetch(`${apiV1Base}/users/sync`, {
                 method: "POST",
                 headers:  {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    username: firebaseUser.displayName,
-                    email: firebaseUser.email,
+                    username,
+                    email,
                     first_name: 'User',
                     last_name: "Name",
-                    password: firebaseUser.uid,
                 })
             })
 
@@ -63,9 +86,7 @@ export function AuthProvider( {children}: {children: ReactNode}) {
             throw new Error(`Backend sync failed: ${response.status} - ${JSON.stringify(errorData)}`);
         }
 
-        const data = await response.json();
-        console.log('User synced successfully:', data);
-        return data;
+        return await response.json();
         } catch (err) {
             console.error('Backend Sync Failed:', err)
         }
@@ -105,4 +126,3 @@ export const useAuth = () => {
     if (!context) throw new Error('useAuth must be used within AuthProvider')
     return context
 }
-

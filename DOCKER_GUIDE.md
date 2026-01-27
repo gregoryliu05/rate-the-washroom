@@ -16,6 +16,17 @@ The project uses Docker Compose to orchestrate multiple services:
 
 ### Development Mode (Recommended)
 
+#### Prerequisites (one-time)
+
+1. **Create Firebase Admin credentials (backend auth)**  
+   Download a Firebase Admin SDK service account JSON and place it at `apps/backend/firebaseAccountKey.json` (this path is gitignored).
+
+2. **Set environment variables**  
+   Copy `env.example` to `.env` at the repo root and fill in:
+   - `NEXT_PUBLIC_FIREBASE_*` (Firebase Web SDK config)
+   - `NEXT_PUBLIC_MAPBOX_TOKEN`
+   - optionally `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8000`)
+
 1. **Start all services in development mode**:
    ```bash
    docker-compose up
@@ -151,17 +162,26 @@ The Docker setup automatically creates and uses a virtual environment at `/opt/v
 
 ## Environment Variables
 
-### Frontend (.env.local)
+### Frontend
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
-NODE_ENV=development
+NEXT_PUBLIC_MAPBOX_TOKEN=pk.your_mapbox_public_token
+
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_firebase_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 ```
 
-### Backend (.env)
+### Backend
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/rate_the_washroom
 REDIS_URL=redis://localhost:6379
-SECRET_KEY=your-secret-key
+
+# Firebase Admin SDK (server-side secret; do NOT commit)
+GOOGLE_APPLICATION_CREDS=/absolute/path/to/firebaseAccountKey.json
 DEBUG=true
 ```
 

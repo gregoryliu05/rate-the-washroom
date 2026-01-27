@@ -8,7 +8,9 @@ class UserCreate(BaseModel):
     email: str
     first_name: str
     last_name: str
-    password: str
+    # Password is managed by the identity provider (Firebase). Keep optional for backwards compatibility
+    # with older clients that may still send it, but it is ignored by the backend.
+    password: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -16,11 +18,11 @@ class UserCreate(BaseModel):
 
 class UserOut(BaseModel):
     id: str
+    public_id: UUID
     username: str
     email: str
     first_name: str
     last_name: str
-    password: str
 
     class Config:
         from_attributes = True
@@ -33,7 +35,7 @@ class WashroomOut(BaseModel):
     address: str
     city: str
     country: str
-    geom: str  # You can use str, dict, or a custom type depending on serialization
+    geom: Optional[dict]
     lat: float
     long: float
     opening_hours: Optional[dict]
@@ -53,13 +55,14 @@ class WashroomCreate(BaseModel):
     city: str
     country: str
     geom: str
-    opening_hours: Optional[dict]
+    opening_hours: Optional[dict] = None
     wheelchair_access: bool  # Or Optional[dict] if nullable
     lat: float
     long: float
-    overall_rating: float
-    rating_count: int
-    created_by: UUID  # UUID type
+    # These are derived from reviews; allow clients to omit and ignore any provided values.
+    overall_rating: float = 0.0
+    rating_count: int = 0
+    created_by: Optional[UUID] = None  # populated from auth
 
     class Config:
         from_attributes = True
@@ -73,10 +76,10 @@ class WashroomCreate(BaseModel):
 # return all but washroom_id since already known
 class ReviewOutByWashroom(BaseModel):
     id: UUID
-    user_id: UUID
+    user_id: str
     rating: int
-    title: str
-    description: str
+    title: Optional[str] = None
+    description: Optional[str] = None
     likes : int
     created_at: datetime
     updated_at: datetime
@@ -86,11 +89,11 @@ class ReviewOutByWashroom(BaseModel):
 
 # return all but user_id since already known
 class ReviewOutByUser(BaseModel):
-    id: str
+    id: UUID
     washroom_id: UUID
     rating: int
-    title: str
-    description: str
+    title: Optional[str] = None
+    description: Optional[str] = None
     likes : int
     created_at: datetime
     updated_at: datetime
@@ -101,7 +104,7 @@ class ReviewOutByUser(BaseModel):
 # creating requires all attributes
 class ReviewCreate(BaseModel):
     washroom_id: UUID
-    user_id: UUID
+    user_id: Optional[str] = None
     rating: int
     title: Optional[str] = None
     description: Optional[str] = None

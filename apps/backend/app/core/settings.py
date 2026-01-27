@@ -1,11 +1,17 @@
-from typing import Optional
-from pydantic import Field
+from typing import Any, Optional
+import json
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     # Database
-    GOOGLE_APPLICATION_CREDS: str
+    GOOGLE_APPLICATION_CREDS: str = Field(
+        validation_alias=AliasChoices(
+            "GOOGLE_APPLICATION_CREDS",
+            "GOOGLE_APPLICATION_CREDENTIALS",  # common convention
+        )
+    )
     DATABASE_URL: str = Field(
         default="postgresql://postgres:postgres@localhost:5432/rate_the_washroom",
         env="DATABASE_URL"
@@ -24,10 +30,44 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Rate the Washroom"
 
     # CORS
-    BACKEND_CORS_ORIGINS: list = Field(
-        default=["http://localhost:3000", "http://localhost:8000"],
+    BACKEND_CORS_ORIGINS: list[str] = Field(
+        default=[
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:3001",
+        ],
         env="BACKEND_CORS_ORIGINS"
     )
+
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, value: Any) -> Any:
+        """
+        Accept either a JSON list (recommended) or a comma-separated string.
+
+        Examples:
+        - ["http://localhost:3000", "http://localhost:8000"]
+        - http://localhost:3000,http://localhost:8000
+        """
+        if value is None:
+            return value
+        if isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            raw = value.strip()
+            if not raw:
+                return []
+            if raw.startswith("["):
+                try:
+                    parsed = json.loads(raw)
+                    if isinstance(parsed, list):
+                        return parsed
+                except Exception:
+                    # Fall back to comma-splitting below
+                    pass
+            return [origin.strip() for origin in raw.split(",") if origin.strip()]
+        return value
 
     # File Upload
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
