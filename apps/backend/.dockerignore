@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local env / venv
+.env
+.env.*
+venv/
+
+# Local data / uploads
+uploads/
+data/
+
+# Secrets (never bake into images)
+*firebase-adminsdk*.json
+firebaseAccountKey.json
+ratethewashroom-*-firebase-adminsdk-*.json
+
+# VCS / OS
+.git/
+.DS_Store

@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+
+# Local env files (do not bake into images)
+.env
+.env.*
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# VCS / OS
+.git/
+.DS_Store
