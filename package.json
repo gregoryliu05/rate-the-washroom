@@ -1,4 +1,11 @@
 {
+  "name": "rate-the-washroom",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix apps/web run dev",
+    "build": "npm --prefix apps/web run build",
+    "vercel-build": "npm --prefix apps/web ci && npm --prefix apps/web run build"
+  },
   "dependencies": {
     "@react-google-maps/api": "^2.20.7",
     "firebase": "^12.5.0",
