@@ -133,6 +133,11 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Keep frontend API helper tracked for Vercel builds
+!apps/web/src/app/lib/
+!apps/web/src/app/lib/api.ts
+apps/web/src/app/lib/*.old
+
 # PyInstaller
 *.manifest
 *.spec
