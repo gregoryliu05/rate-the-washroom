@@ -7,11 +7,6 @@ const nextConfig: NextConfig = {
   // Optimize for production
   compress: true,
 
-  // Avoid Turbopack picking the wrong monorepo root when multiple lockfiles exist.
-  turbopack: {
-    root: process.cwd(),
-  },
-  
   // External packages for server components
   serverExternalPackages: [],
   

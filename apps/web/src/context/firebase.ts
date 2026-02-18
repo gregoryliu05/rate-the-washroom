@@ -1,26 +1,46 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getApp, getApps, initializeApp } from "firebase/app";
+import { getAuth, type Auth } from "firebase/auth";
 
-const firebaseConfig = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+type FirebaseConfig = {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
 };
 
-const missingKeys = Object.entries(firebaseConfig)
+const rawFirebaseConfig: Partial<FirebaseConfig> = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+const getFirebaseConfigOrThrow = (): FirebaseConfig => {
+  const missingKeys = Object.entries(rawFirebaseConfig)
     .filter(([, value]) => !value)
     .map(([key]) => key);
-if (missingKeys.length > 0) {
+
+  if (missingKeys.length > 0) {
     throw new Error(
-        `Missing Firebase configuration values: ${missingKeys.join(', ')}. ` +
-        `Please set the corresponding environment variables.`
+      `Missing Firebase configuration values: ${missingKeys.join(", ")}. ` +
+        "Please set the corresponding environment variables."
     );
-}
+  }
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
+  return rawFirebaseConfig as FirebaseConfig;
+};
 
-export { app, auth };
+let cachedAuth: Auth | null = null;
+
+export const getFirebaseAuth = (): Auth => {
+  if (cachedAuth) return cachedAuth;
+
+  const firebaseConfig = getFirebaseConfigOrThrow();
+  const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  cachedAuth = getAuth(app);
+  return cachedAuth;
+};
