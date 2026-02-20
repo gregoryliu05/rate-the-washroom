@@ -4,8 +4,10 @@ from app.db.session import get_db
 from typing import Generator
 from firebase_admin import auth
 from app.core.security import get_firebase_app
+import logging
 
 security = HTTPBearer(auto_error =False)
+logger = logging.getLogger(__name__)
 
 def get_db_session() -> Generator:
     for db in get_db():
@@ -19,6 +21,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     try:
         get_firebase_app()
     except Exception:
+        logger.exception("Firebase Admin initialization failed")
         # Treat missing/invalid Firebase Admin credentials as a service configuration issue,
         # not an authentication failure. This avoids confusing client-side "CORS" errors
         # caused by server-side crashes.
