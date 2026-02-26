@@ -20,14 +20,11 @@ def get_db_session() -> Generator:
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     try:
         get_firebase_app()
-    except Exception:
+    except Exception as e:
         logger.exception("Firebase Admin initialization failed")
-        # Treat missing/invalid Firebase Admin credentials as a service configuration issue,
-        # not an authentication failure. This avoids confusing client-side "CORS" errors
-        # caused by server-side crashes.
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Authentication service is not configured on the server",
+            detail=f"Authentication service error: {e}",
         )
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(status_code= status.HTTP_401_UNAUTHORIZED, detail = "missing bearer")

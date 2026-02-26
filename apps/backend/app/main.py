@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 load_dotenv()
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.settings import settings
-from app.core.security import *
 from app.api.routers import washrooms, users, reviews
 
 # Create FastAPI app

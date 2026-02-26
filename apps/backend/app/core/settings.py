@@ -6,7 +6,8 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # Database
-    GOOGLE_APPLICATION_CREDS: str = Field(
+    GOOGLE_APPLICATION_CREDS: Optional[str] = Field(
+        default=None,
         validation_alias=AliasChoices(
             "GOOGLE_APPLICATION_CREDS",
             "GOOGLE_APPLICATION_CREDENTIALS",  # common convention
