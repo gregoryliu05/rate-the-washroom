@@ -56,8 +56,8 @@ export interface WashroomCreate {
   wheelchair_access: boolean;
   lat: number;
   long: number;
-  overall_rating: number;
-  rating_count: number;
+  overall_rating?: number;
+  rating_count?: number;
   created_by?: string; // Optional; backend derives from auth
 }
 
@@ -117,11 +117,14 @@ export interface ApiResponse<T> {
 
 // ===== USER ENDPOINTS =====
 
-export async function createUser(payload: UserCreate): Promise<ApiResponse<User>> {
+export async function createUser(payload: UserCreate, token: string): Promise<ApiResponse<User>> {
   try {
-    const response = await fetch(`${API_V1_BASE_URL}/users/`, {
+    const response = await fetch(`${API_V1_BASE_URL}/users/sync`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(payload),
     });
 
@@ -146,9 +149,13 @@ export async function getUser(userId: string): Promise<ApiResponse<User>> {
   }
 }
 
-export async function getUsers(): Promise<ApiResponse<User[]>> {
+export async function getUsers(token: string): Promise<ApiResponse<User[]>> {
   try {
-    const response = await fetch(`${API_V1_BASE_URL}/users/`);
+    const response = await fetch(`${API_V1_BASE_URL}/users/`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     if (!response.ok) throw new Error(`API error: ${response.status}`);
     const data = await response.json();
     return { data };
@@ -160,18 +167,9 @@ export async function getUsers(): Promise<ApiResponse<User[]>> {
 
 // ===== WASHROOM ENDPOINTS =====
 
-export async function getWashrooms(params?: {
-  city?: string;
-  country?: string;
-  limit?: number;
-}): Promise<ApiResponse<Washroom[]>> {
+export async function getWashrooms(): Promise<ApiResponse<Washroom[]>> {
   try {
-    const queryParams = new URLSearchParams();
-    if (params?.city) queryParams.append('city', params.city);
-    if (params?.country) queryParams.append('country', params.country);
-    if (params?.limit) queryParams.append('limit', params.limit.toString());
-
-    const response = await fetch(`${API_V1_BASE_URL}/washrooms/?${queryParams.toString()}`);
+    const response = await fetch(`${API_V1_BASE_URL}/washrooms/`);
     if (!response.ok) throw new Error(`API error: ${response.status}`);
     const data = await response.json();
     return { data };

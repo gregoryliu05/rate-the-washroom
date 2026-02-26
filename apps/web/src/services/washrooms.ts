@@ -14,8 +14,8 @@ export interface WashroomCreatePayload {
     geom?: string | GeoPoint;
     opening_hours?: Record<string, string>;
     wheelchair_access?: boolean;
-    overall_rating: number;
-    rating_count: number;
+    overall_rating?: number;
+    rating_count?: number;
     created_by?: string;
 }
 
