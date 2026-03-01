@@ -497,8 +497,7 @@ export function MapPage({ onAddReview, onAddListing }: MapPageProps) {
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                className="rounded-full w-full sm:flex-1"
+                className="rounded-full w-full sm:flex-1 h-11 px-6 text-base font-medium border-2 border-gray-300 bg-gray-50 hover:bg-gray-100"
                 onClick={() => showRoute(selectedWashroom, "walking")}
                 disabled={!userLocation || isLoadingRoute}
               >
@@ -507,8 +506,7 @@ export function MapPage({ onAddReview, onAddListing }: MapPageProps) {
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                className="rounded-full w-full sm:flex-1"
+                className="rounded-full w-full sm:flex-1 h-11 px-6 text-base font-medium border-2 border-gray-300 bg-gray-50 hover:bg-gray-100"
                 onClick={() => showRoute(selectedWashroom, "driving")}
                 disabled={!userLocation || isLoadingRoute}
               >
@@ -519,8 +517,7 @@ export function MapPage({ onAddReview, onAddListing }: MapPageProps) {
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                className="mt-2 rounded-full w-full"
+                className="mt-2 rounded-full w-full h-11 px-6 text-base font-medium border-2 border-gray-300 bg-gray-50 hover:bg-gray-100"
                 onClick={clearRoute}
               >
                 Clear
@@ -545,8 +542,7 @@ export function MapPage({ onAddReview, onAddListing }: MapPageProps) {
               clearRoute();
             }}
             variant="outline"
-            size="sm"
-            className="w-full mt-2 rounded-full"
+            className="w-full mt-2 rounded-full h-11 px-6 text-base font-medium border-2 border-gray-300 bg-gray-50 hover:bg-gray-100"
           >
             Close
           </Button>
@@ -598,10 +594,17 @@ export function MapPage({ onAddReview, onAddListing }: MapPageProps) {
       ) : showNearbyEmptyState ? (
         <div className="h-[calc(100%-90px)] flex items-center justify-center p-6">
           <div className="max-w-sm w-full text-center rounded-2xl border border-border bg-white p-6 shadow-sm">
-            <p className="text-base font-medium">No nearby washrooms found yet.</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              This area might not have user-submitted listings yet.
+            <p className="text-base font-medium">
+              No nearby washrooms found yet.
             </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Tip: zoom out until your area shows washrooms.
+            </p>
+            <div className="flex items-center gap-3 my-4">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-sm font-medium text-muted-foreground">OR</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
             <Button
               type="button"
               className="mt-4 w-full rounded-full"
@@ -610,9 +613,7 @@ export function MapPage({ onAddReview, onAddListing }: MapPageProps) {
             >
               {isJumpingToClosest ? "Finding closest washroom..." : "Jump to closest washroom"}
             </Button>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Tip: zoom out until your area shows washrooms.
-            </p>
+
           </div>
         </div>
       ) : (
@@ -782,7 +783,7 @@ export function MapPage({ onAddReview, onAddListing }: MapPageProps) {
       >
         {isDesktop ? (
           <>
-            <Panel defaultSize={32} minSize={20} maxSize={55} className="min-w-0">
+            <Panel defaultSize={25} minSize={20} maxSize={40} className="min-w-0">
               {listSection}
             </Panel>
             <PanelResizeHandle
@@ -793,7 +794,7 @@ export function MapPage({ onAddReview, onAddListing }: MapPageProps) {
             >
               <div className="h-20 w-1 rounded-full bg-muted-foreground/40 group-hover:bg-muted-foreground/70" />
             </PanelResizeHandle>
-            <Panel defaultSize={68} minSize={45} className="min-w-0">
+            <Panel defaultSize={75} minSize={60} className="min-w-0">
               {mapSection}
             </Panel>
           </>
