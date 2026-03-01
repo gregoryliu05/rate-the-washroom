@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, text
 from typing import List, Optional
 import uuid
@@ -15,6 +15,12 @@ router = APIRouter(
     prefix="/washrooms",
     tags = ["washrooms"]
 )
+
+def _get_creator_name(creator) -> str | None:
+    if creator is None:
+        return None
+    return f"{creator.first_name} {creator.last_name}".strip() or None
+
 
 def _geom_to_geojson(geom_value):
     if geom_value is None:
@@ -35,21 +41,21 @@ def get_washrooms_in_bounds(
     db: Session = Depends(deps.get_db)
 ):
 
-    query = ""
     if all(v is not None for v in [min_lat, min_lon, max_lat, max_lon]):
         query = text("""
-            SELECT *
-            FROM washrooms
-                WHERE ST_Within(
-                    geom,
-                    ST_MakeEnvelope(:min_lon, :min_lat, :max_lon, :max_lat, 4326))
-
-
+            SELECT w.*, u.first_name AS creator_first_name, u.last_name AS creator_last_name
+            FROM washrooms w
+            LEFT JOIN users u ON w.created_by = u.public_id
+            WHERE ST_Within(
+                w.geom,
+                ST_MakeEnvelope(:min_lon, :min_lat, :max_lon, :max_lat, 4326))
         """)
     else:
         query = text("""
-            SELECT * from washrooms
-                     """)
+            SELECT w.*, u.first_name AS creator_first_name, u.last_name AS creator_last_name
+            FROM washrooms w
+            LEFT JOIN users u ON w.created_by = u.public_id
+        """)
 
 
     result = db.execute(query, {
@@ -64,6 +70,9 @@ def get_washrooms_in_bounds(
     response = []
     for w in washrooms:
         geom_geojson = _geom_to_geojson(w.geom)
+        first = getattr(w, "creator_first_name", None)
+        last = getattr(w, "creator_last_name", None)
+        creator_name = f"{first} {last}".strip() if (first or last) else None
 
         response.append(
             schemas.WashroomOut(
@@ -80,7 +89,7 @@ def get_washrooms_in_bounds(
                 wheelchair_access=w.wheelchair_access,
                 overall_rating=w.overall_rating,
                 rating_count=w.rating_count,
-                created_by=str(w.created_by)
+                created_by=creator_name,
             )
         )
 
@@ -100,7 +109,9 @@ def get_my_washrooms(
         raise HTTPException(status_code=404, detail="User not found")
 
     result = db.execute(
-        select(models.Washroom).where(models.Washroom.created_by == user.public_id)
+        select(models.Washroom)
+        .options(joinedload(models.Washroom.creator))
+        .where(models.Washroom.created_by == user.public_id)
     )
     washrooms = result.scalars().all()
 
@@ -122,7 +133,7 @@ def get_my_washrooms(
                 wheelchair_access=w.wheelchair_access,
                 overall_rating=w.overall_rating,
                 rating_count=w.rating_count,
-                created_by=str(w.created_by),
+                created_by=_get_creator_name(w.creator),
             )
         )
 
@@ -136,7 +147,11 @@ def get_washroom(washroom_id: str, db: Session = Depends(deps.get_db)):
     except ValueError:
         raise HTTPException(status_code = 400, detail = "washroom ID must be uuid")
 
-    res = db.execute(select(models.Washroom).where(models.Washroom.id == washroom_id))
+    res = db.execute(
+        select(models.Washroom)
+        .options(joinedload(models.Washroom.creator))
+        .where(models.Washroom.id == washroom_id)
+    )
     washroom = res.scalar_one_or_none()
     if not washroom:
         raise HTTPException(status_code = 404, detail = "washroom not found")
@@ -152,13 +167,13 @@ def get_washroom(washroom_id: str, db: Session = Depends(deps.get_db)):
         city=washroom.city,
         country=washroom.country,
         geom=geom_geojson,
-        lat = washroom.lat,
-        long = washroom.long,
+        lat=washroom.lat,
+        long=washroom.long,
         opening_hours=washroom.opening_hours,
-        wheelchair_access = washroom.wheelchair_access,
+        wheelchair_access=washroom.wheelchair_access,
         overall_rating=washroom.overall_rating,
         rating_count=washroom.rating_count,
-        created_by=str(washroom.created_by)
+        created_by=_get_creator_name(washroom.creator),
     )
 
 
@@ -218,5 +233,5 @@ def create_washroom(
         wheelchair_access=new_washroom.wheelchair_access,
         overall_rating=new_washroom.overall_rating,
         rating_count=new_washroom.rating_count,
-        created_by=str(new_washroom.created_by),
+        created_by=f"{user.first_name} {user.last_name}".strip() or None,
     )
