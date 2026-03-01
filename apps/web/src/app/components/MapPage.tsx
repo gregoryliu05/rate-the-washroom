@@ -601,13 +601,14 @@ export function MapPage({ onAddReview, onAddListing }: MapPageProps) {
               Tip: zoom out until your area shows washrooms.
             </p>
             <div className="flex items-center gap-3 my-4">
-              <div className="flex-1 h-px bg-border" />
-              <span className="text-sm font-medium text-muted-foreground">OR</span>
-              <div className="flex-1 h-px bg-border" />
+              <div className="flex-1 h-px bg-black" />
+              <span className="text-sm font-medium text-black">OR</span>
+              <div className="flex-1 h-px bg-black" />
             </div>
             <Button
               type="button"
-              className="mt-4 w-full rounded-full"
+              className="rounded-full"
+              variant="outline"
               onClick={handleJumpToClosestWashroom}
               disabled={isJumpingToClosest}
             >
