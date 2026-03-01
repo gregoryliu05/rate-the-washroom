@@ -291,3 +291,6 @@ dist/
 # Firebase service account
 apps/backend/ratethewashroom-a7745-firebase-adminsdk-fbsvc-67f7db3207.json
 apps/backend/firebaseAccountKey.json
+
+# ignore internal docs
+*.md
