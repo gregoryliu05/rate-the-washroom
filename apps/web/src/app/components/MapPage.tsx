@@ -8,8 +8,10 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet";
 import { Search, Plus, Loader2, Menu } from "lucide-react";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import Link from "next/link";
 import {
+  getWashrooms,
   getWashroomsInBounds,
   getCurrentLocation,
   calculateDistance,
@@ -21,6 +23,7 @@ import { useAuth } from "../../context/authContext";
 import { toast } from "sonner";
 import { Toaster } from "./ui/sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { cn } from "./ui/utils";
 
 // Mapbox token
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
@@ -60,6 +63,8 @@ export function MapPage({ onAddReview, onAddListing }: MapPageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [mapReady, setMapReady] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [isJumpingToClosest, setIsJumpingToClosest] = useState(false);
   const [viewportBounds, setViewportBounds] = useState<{
     minLat: number;
     minLon: number;
@@ -74,6 +79,15 @@ export function MapPage({ onAddReview, onAddListing }: MapPageProps) {
 
   const ROUTE_SOURCE_ID = "washroom-route";
   const ROUTE_LAYER_ID = "washroom-route-line";
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    const apply = () => setIsDesktop(media.matches);
+    apply();
+
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, []);
 
   const formatDurationFromSeconds = (seconds: number) => {
     const minutes = Math.round(seconds / 60);
@@ -391,11 +405,222 @@ export function MapPage({ onAddReview, onAddListing }: MapPageProps) {
     }
   };
 
+  const handleJumpToClosestWashroom = async () => {
+    if (!map.current) return;
+
+    setIsJumpingToClosest(true);
+    try {
+      const response = await getWashrooms();
+      if (response.error || !response.data) {
+        throw new Error(response.error || "Could not load washrooms");
+      }
+
+      if (response.data.length === 0) {
+        toast.info("No washrooms have been added yet");
+        return;
+      }
+
+      const mapCenter = map.current.getCenter();
+      const reference = userLocation
+        ? { lat: userLocation.lat, lng: userLocation.lng }
+        : { lat: mapCenter.lat, lng: mapCenter.lng };
+
+      let closest = response.data[0];
+      let closestDistance = calculateDistance(reference.lat, reference.lng, closest.lat, closest.long);
+
+      for (const washroom of response.data.slice(1)) {
+        const distance = calculateDistance(reference.lat, reference.lng, washroom.lat, washroom.long);
+        if (distance < closestDistance) {
+          closest = washroom;
+          closestDistance = distance;
+        }
+      }
+
+      map.current.flyTo({
+        center: [closest.long, closest.lat],
+        zoom: 14,
+        essential: true,
+      });
+      setSelectedWashroom(closest);
+      setDetailWashroom(null);
+      toast.success("Jumped to the closest washroom");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to find closest washroom";
+      toast.error("Could not jump to closest washroom", { description: message });
+    } finally {
+      setIsJumpingToClosest(false);
+    }
+  };
+
   // Filter washrooms by search
   const filteredWashrooms = washrooms.filter((w) =>
     w.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     w.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     w.address?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const showNearbyEmptyState = !isLoading && washrooms.length === 0 && searchQuery.trim().length === 0;
+
+  const mapSection = (
+    <div className="relative h-full min-h-0">
+      <div ref={mapContainer} className="w-full h-full" />
+
+      {selectedWashroom && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[calc(100vw-2rem)] max-w-sm z-20">
+          {(() => {
+            const selectedMeta = washrooms.find((w) => w.id === selectedWashroom.id);
+            const walkingTime =
+              routesByProfile.walking
+                ? formatDurationFromSeconds(routesByProfile.walking.durationSeconds)
+                : selectedMeta?.walkingTime;
+            const drivingTime =
+              routesByProfile.driving
+                ? formatDurationFromSeconds(routesByProfile.driving.durationSeconds)
+                : selectedMeta?.drivingTime;
+
+            return (
+              <WashroomListCard
+                washroom={selectedWashroom}
+                className="bg-white/95 backdrop-blur-md"
+                distance={selectedMeta?.distance}
+                walkingTime={walkingTime}
+                drivingTime={drivingTime}
+                isSelected
+                onClick={() => setDetailWashroom(selectedWashroom)}
+                onViewDetails={() => setDetailWashroom(selectedWashroom)}
+              />
+            );
+          })()}
+
+          <div className="mt-2 rounded-2xl border-2 bg-white/95 backdrop-blur-md p-3 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-stretch gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-full w-full sm:flex-1"
+                onClick={() => showRoute(selectedWashroom, "walking")}
+                disabled={!userLocation || isLoadingRoute}
+              >
+                Walk
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="rounded-full w-full sm:flex-1"
+                onClick={() => showRoute(selectedWashroom, "driving")}
+                disabled={!userLocation || isLoadingRoute}
+              >
+                Drive
+              </Button>
+            </div>
+            {activeRouteProfile && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2 rounded-full w-full"
+                onClick={clearRoute}
+              >
+                Clear
+              </Button>
+            )}
+            {!userLocation && (
+              <div className="mt-2 text-xs text-muted-foreground">
+                Enable location services to get directions.
+              </div>
+            )}
+            {routeError && (
+              <div className="mt-2 text-xs text-muted-foreground">
+                {routeError}
+              </div>
+            )}
+          </div>
+
+          <Button
+            onClick={() => {
+              setSelectedWashroom(null);
+              setDetailWashroom(null);
+              clearRoute();
+            }}
+            variant="outline"
+            size="sm"
+            className="w-full mt-2 rounded-full"
+          >
+            Close
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
+  const listSection = (
+    <div className="h-full bg-background md:border-r border-border overflow-y-auto min-h-0">
+      <div className="p-4 space-y-4 md:sticky md:top-0 bg-background z-10 border-b border-border">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search washrooms..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {filteredWashrooms.length} washroom{filteredWashrooms.length !== 1 ? "s" : ""} nearby
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center p-12">
+          <Loader2 className="size-8 animate-spin" style={{ color: "var(--coral)" }} />
+        </div>
+      ) : filteredWashrooms.length > 0 ? (
+        <div className="p-4 space-y-3">
+          {filteredWashrooms.map((washroom) => (
+            <WashroomListCard
+              key={washroom.id}
+              washroom={washroom}
+              distance={washroom.distance}
+              walkingTime={washroom.walkingTime}
+              drivingTime={washroom.drivingTime}
+              isSelected={selectedWashroom?.id === washroom.id}
+              onClick={() => handleWashroomClick(washroom)}
+              onViewDetails={() => {
+                handleWashroomClick(washroom);
+                setDetailWashroom(washroom);
+              }}
+            />
+          ))}
+        </div>
+      ) : showNearbyEmptyState ? (
+        <div className="h-[calc(100%-90px)] flex items-center justify-center p-6">
+          <div className="max-w-sm w-full text-center rounded-2xl border border-border bg-white p-6 shadow-sm">
+            <p className="text-base font-medium">No nearby washrooms found yet.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              This area might not have user-submitted listings yet.
+            </p>
+            <Button
+              type="button"
+              className="mt-4 w-full rounded-full"
+              onClick={handleJumpToClosestWashroom}
+              disabled={isJumpingToClosest}
+            >
+              {isJumpingToClosest ? "Finding closest washroom..." : "Jump to closest washroom"}
+            </Button>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Tip: zoom out until your area shows washrooms.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-12 text-muted-foreground">
+          No washrooms found
+        </div>
+      )}
+    </div>
   );
 
   return (
@@ -550,155 +775,47 @@ export function MapPage({ onAddReview, onAddListing }: MapPageProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 min-h-0 grid grid-rows-[2fr_1fr] md:flex md:flex-row md:overflow-hidden">
-        {/* Map */}
-        <div className="order-1 md:order-2 w-full md:flex-1 relative min-h-0">
-          <div ref={mapContainer} className="w-full h-full" />
-
-          {/* Selected Washroom Popup */}
-          {selectedWashroom && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[calc(100vw-2rem)] max-w-sm">
-              {(() => {
-                const selectedMeta = washrooms.find((w) => w.id === selectedWashroom.id);
-                const walkingTime =
-                  routesByProfile.walking
-                    ? formatDurationFromSeconds(routesByProfile.walking.durationSeconds)
-                    : selectedMeta?.walkingTime;
-                const drivingTime =
-                  routesByProfile.driving
-                    ? formatDurationFromSeconds(routesByProfile.driving.durationSeconds)
-                    : selectedMeta?.drivingTime;
-
-                return (
-              <WashroomListCard
-                washroom={selectedWashroom}
-                className="bg-white/95 backdrop-blur-md"
-                distance={
-                  selectedMeta?.distance
-                }
-                walkingTime={
-                  walkingTime
-                }
-                drivingTime={
-                  drivingTime
-                }
-                isSelected
-                onClick={() => setDetailWashroom(selectedWashroom)}
-                onViewDetails={() => setDetailWashroom(selectedWashroom)}
-              />
-                );
-              })()}
-
-              <div className="mt-2 rounded-2xl border-2 bg-white/95 backdrop-blur-md p-3 shadow-sm">
-                <div className="flex flex-col sm:flex-row items-stretch gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full w-full sm:flex-1"
-                    onClick={() => showRoute(selectedWashroom, "walking")}
-                    disabled={!userLocation || isLoadingRoute}
-                  >
-                    Walk
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full w-full sm:flex-1"
-                    onClick={() => showRoute(selectedWashroom, "driving")}
-                    disabled={!userLocation || isLoadingRoute}
-                  >
-                    Drive
-                  </Button>
-                </div>
-                {activeRouteProfile && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="mt-2 rounded-full w-full"
-                    onClick={clearRoute}
-                  >
-                    Clear
-                  </Button>
-                )}
-                {!userLocation && (
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Enable location services to get directions.
-                  </div>
-                )}
-                {routeError && (
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    {routeError}
-                  </div>
-                )}
-              </div>
-
-              <Button
-                onClick={() => {
-                  setSelectedWashroom(null);
-                  setDetailWashroom(null);
-                  clearRoute();
-                }}
-                variant="outline"
-                size="sm"
-                className="w-full mt-2 rounded-full"
-              >
-                Close
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Sidebar - Washroom List */}
-        <div className="order-2 md:order-1 w-full md:w-96 bg-background border-t border-border md:border-t-0 md:border-r md:overflow-y-auto overflow-y-auto min-h-0">
-          <div className="p-4 space-y-4 md:sticky md:top-0 bg-background z-10 border-b border-border">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search washrooms..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {filteredWashrooms.length} washroom{filteredWashrooms.length !== 1 ? 's' : ''} nearby
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="flex items-center justify-center p-12">
-              <Loader2 className="size-8 animate-spin" style={{ color: 'var(--coral)' }} />
-            </div>
-          ) : (
-            <div className="p-4 space-y-3">
-              {filteredWashrooms.map((washroom) => (
-                <WashroomListCard
-                  key={washroom.id}
-                  washroom={washroom}
-                  distance={washroom.distance}
-                  walkingTime={washroom.walkingTime}
-                  drivingTime={washroom.drivingTime}
-                  isSelected={selectedWashroom?.id === washroom.id}
-                  onClick={() => handleWashroomClick(washroom)}
-                  onViewDetails={() => {
-                    handleWashroomClick(washroom);
-                    setDetailWashroom(washroom);
-                  }}
-                />
-              ))}
-              {filteredWashrooms.length === 0 && (
-                <div className="text-center py-12 text-muted-foreground">
-                  No washrooms found
-                </div>
+      <PanelGroup
+        direction={isDesktop ? "horizontal" : "vertical"}
+        className="flex-1 min-h-0"
+        onLayout={() => map.current?.resize()}
+      >
+        {isDesktop ? (
+          <>
+            <Panel defaultSize={32} minSize={20} maxSize={55} className="min-w-0">
+              {listSection}
+            </Panel>
+            <PanelResizeHandle
+              className={cn(
+                "group shrink-0 bg-border/70 transition-colors hover:bg-border data-[resize-handle-active]:bg-[var(--coral)]",
+                "w-2 cursor-col-resize flex items-center justify-center"
               )}
-            </div>
-          )}
-        </div>
-      </div>
+            >
+              <div className="h-20 w-1 rounded-full bg-muted-foreground/40 group-hover:bg-muted-foreground/70" />
+            </PanelResizeHandle>
+            <Panel defaultSize={68} minSize={45} className="min-w-0">
+              {mapSection}
+            </Panel>
+          </>
+        ) : (
+          <>
+            <Panel defaultSize={67} minSize={40} className="min-h-0">
+              {mapSection}
+            </Panel>
+            <PanelResizeHandle
+              className={cn(
+                "group shrink-0 bg-border/70 transition-colors hover:bg-border data-[resize-handle-active]:bg-[var(--coral)]",
+                "h-3 cursor-row-resize flex items-center justify-center"
+              )}
+            >
+              <div className="h-1 w-16 rounded-full bg-muted-foreground/40 group-hover:bg-muted-foreground/70" />
+            </PanelResizeHandle>
+            <Panel defaultSize={33} minSize={20} className="min-h-0">
+              {listSection}
+            </Panel>
+          </>
+        )}
+      </PanelGroup>
     </div>
   );
 }
