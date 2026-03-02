@@ -42,7 +42,7 @@ class WashroomOut(BaseModel):
     wheelchair_access: bool  # Or Optional[dict] if nullable
     overall_rating: float
     rating_count: int
-    created_by: UUID
+    created_by: Optional[str] = None
 
     class Config:
         from_attributes = True

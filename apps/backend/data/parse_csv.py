@@ -116,7 +116,7 @@ def create_washroom_instances(df: pd.DataFrame) -> List[dict]:
 
         washroom_data = {
             'id': uuid.uuid4(),
-            'name': str(row['name']),
+            'name': str(row['name'])[:50],
             'description': str(row['description']),
             'address': str(row['address']),
             'city': str(row['city']),
@@ -183,21 +183,30 @@ def load_data_to_database():
             print("No washroom data to seed")
             return True
             
-        # Check if database already has washroom data
         db = SessionLocal()
         try:
-            existing_count = db.query(Washroom).count()
-            if existing_count > 0:
-                print(f"Database already has {existing_count} washrooms, skipping seed")
-                return True
-            
+            # Get or create the RTW Owners system user
+            from app.db.models import User
+            system_user = db.query(User).filter(User.id == "rtw-system-user").first()
+            if not system_user:
+                system_user = User(
+                    id="rtw-system-user",
+                    username="rtw_owners",
+                    first_name="RTW",
+                    last_name="Owners",
+                    email="rtw-owners@system.local",
+                    password="unused",
+                )
+                db.add(system_user)
+                db.flush()
+
             # Get or create "Accessible" amenity
             accessible_amenity = db.query(Amenity).filter(Amenity.name == "Accessible").first()
             if not accessible_amenity:
                 accessible_amenity = Amenity(name="Accessible")
                 db.add(accessible_amenity)
                 db.flush()  # Flush to get the ID
-            
+
             # Insert washroom data
             inserted_count = 0
             for washroom_data in washrooms_data:
@@ -211,6 +220,10 @@ def load_data_to_database():
                     point = Point(lon, lat)
                     washroom_data['geom'] = from_shape(point, srid=4326)
                 
+                # Set wheelchair_access on the washroom row
+                washroom_data['wheelchair_access'] = wheelchair_access
+                washroom_data['created_by'] = system_user.public_id
+
                 washroom = Washroom(**washroom_data)
                 db.add(washroom)
                 db.flush()  # Flush to get the washroom ID

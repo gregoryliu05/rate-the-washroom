@@ -34,7 +34,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/rate_the_washroom
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/rate_the_washroom}
       REDIS_URL: redis://redis:6379
       ENVIRONMENT: development
       DEBUG: "true"
@@ -63,7 +63,7 @@ services:
     ports:
       - "8001:8000"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/rate_the_washroom
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/rate_the_washroom}
       REDIS_URL: redis://redis:6379
       ENVIRONMENT: production
       DEBUG: "false"

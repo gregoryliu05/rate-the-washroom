@@ -10,7 +10,7 @@ import {
     GoogleAuthProvider,
     signInWithPopup
 } from 'firebase/auth'
-import { auth } from './firebase'
+import { getFirebaseAuth } from './firebase'
 
 interface AuthContextValue {
     user: User | null;
@@ -30,19 +30,27 @@ export function AuthProvider( {children}: {children: ReactNode}) {
 
     useEffect(() => {
         let alive = true;
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-            if (!alive) return;
-            setLoading(true);
-            setUser(firebaseUser);
-            if (firebaseUser) {
-                await syncUserWithBackend(firebaseUser);
-            }
+        let unsubscribe: (() => void) | undefined;
+
+        try {
+            const auth = getFirebaseAuth();
+            unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+                if (!alive) return;
+                setLoading(true);
+                setUser(firebaseUser);
+                if (firebaseUser) {
+                    await syncUserWithBackend(firebaseUser);
+                }
+                if (alive) setLoading(false);
+            });
+        } catch (err) {
+            console.error('Firebase initialization failed:', err);
             if (alive) setLoading(false);
-        });
+        }
 
         return () => {
             alive = false;
-            unsubscribe();
+            unsubscribe?.();
         };
     }, [])
 
@@ -93,19 +101,23 @@ export function AuthProvider( {children}: {children: ReactNode}) {
     }
 
     const signIn = async (email: string, password: string) => {
+    const auth = getFirebaseAuth();
     await signInWithEmailAndPassword(auth, email, password);
     };
 
     const signUp = async (email: string, password: string) => {
+        const auth = getFirebaseAuth();
         await createUserWithEmailAndPassword(auth, email, password);
     };
 
     const signInWithGoogle = async () => {
+        const auth = getFirebaseAuth();
         const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
     };
 
     const signOut = async () => {
+        const auth = getFirebaseAuth();
         await firebaseSignOut(auth);
     };
 

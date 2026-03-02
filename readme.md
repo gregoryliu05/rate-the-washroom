@@ -26,6 +26,7 @@ npm run dev # Start development server on localhost:3000
 Navigate to [http://localhost:3000](http://localhost:3000) to explore the app.
 
 ## Deployment
+:>D
 
 The project can be deployed using Docker as well as on Next.js supported cloud environments such as Vercel. For deployment guidance, refer to [Dockerfile](../Dockerfile) and [Vercel Documentation](https://vercel.com/docs).
 

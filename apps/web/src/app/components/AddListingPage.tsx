@@ -249,8 +249,6 @@ export function AddListingPage({ onBack, onCreated }: AddListingPageProps) {
         lat,
         long,
         geom: createPointGeometry(lat, long), // Create PostGIS POINT
-        overall_rating: 0, // Initial rating
-        rating_count: 0, // No reviews yet
         wheelchair_access: wheelchairAccess,
         opening_hours: Object.keys(openingHours).length > 0 ? openingHours : undefined,
       };

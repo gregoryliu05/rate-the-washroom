@@ -133,6 +133,11 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Keep frontend API helper tracked for Vercel builds
+!apps/web/src/app/lib/
+!apps/web/src/app/lib/api.ts
+apps/web/src/app/lib/*.old
+
 # PyInstaller
 *.manifest
 *.spec
@@ -286,3 +291,6 @@ dist/
 # Firebase service account
 apps/backend/ratethewashroom-a7745-firebase-adminsdk-fbsvc-67f7db3207.json
 apps/backend/firebaseAccountKey.json
+
+# ignore internal docs
+*.md

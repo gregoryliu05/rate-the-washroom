@@ -11,9 +11,13 @@ const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const API_URL = RAW_API_URL.replace(/\/+$/, "");
 const API_V1_URL = API_URL.endsWith("/api/v1") ? API_URL : `${API_URL}/api/v1`;
 
-export async function listUsers() {
+export async function listUsers(token: string) {
     try {
-        const response = await fetch(`${API_V1_URL}/users/`);
+        const response = await fetch(`${API_V1_URL}/users/`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
 
         if (!response.ok) {
             throw new Error(`error: ${response.status}`);
